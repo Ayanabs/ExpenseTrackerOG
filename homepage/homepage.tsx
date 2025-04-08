@@ -11,6 +11,7 @@ import { Category } from './components/category'; // Import Category type
 import BottomTabs from './components/bottomtabs'; // Import BottomTabs
 import AddLimitModal from './components/addlimit'; // Import AddLimitModal component
 import { NavigationContainer } from '@react-navigation/native';
+import { Platform } from 'react-native';
 
 export default function Homepage() {
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -54,10 +55,11 @@ export default function Homepage() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
       
-      {/* Header Component */}
+     
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+         {/* Header Component */}
       <Header />
       
-      <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Image Picker Section
         {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
          */}
@@ -70,9 +72,8 @@ export default function Homepage() {
           <TimeRemainingHeader />
           
           {/* Add Limit Button */}
-          <TouchableOpacity style={styles.setGoalButton} onPress={() => setModalVisible(true)}>
-          <Text style={styles.setGoalButtonText}>Set Goal</Text>
-            </TouchableOpacity>
+          <AddLimitModal onLimitSet={handleLimitSet} />
+
 
 
         </View>
@@ -99,12 +100,8 @@ export default function Homepage() {
       />
 
        {/* AddLimitModal with visibility and onClose handlers */}
-       <AddLimitModal
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          onLimitSet={handleLimitSet}
+       <AddLimitModal onLimitSet={handleLimitSet} />
 
-        />
        
       {/* Bottom Tabs with onAddPress prop */}
       <BottomTabs onAddPress={handleAddPress} />
@@ -116,6 +113,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.background,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     
   },
   scrollContent: {
@@ -149,7 +147,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.yellow,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    marginLeft: 75,
+    marginLeft: 80,
     borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',

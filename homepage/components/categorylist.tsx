@@ -75,6 +75,7 @@ const styles = StyleSheet.create({
     borderTopEndRadius: 35,
     borderTopStartRadius: 35,
     padding: 25,
+    paddingTop: 9,
     width: '100%',
   },
   title: {

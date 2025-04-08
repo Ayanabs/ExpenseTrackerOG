@@ -1,7 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { Svg, Circle } from 'react-native-svg';
 import { COLORS } from '../../theme';
+
+// Animated Circle
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 interface Props {
   percentage: number;
@@ -10,15 +13,32 @@ interface Props {
 }
 
 const TimeCircleProgress: React.FC<Props> = ({ percentage, totalSpent, timeLabel }) => {
-  const radius = 40; // Increased radius for a bigger circle
-  const strokeWidth = 10; // Thicker stroke for the larger circle
-  const size = 100; // Increased SVG size to accommodate the larger circle
+  const radius = 40;
+  const strokeWidth = 10;
+  const size = 100;
+
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (circumference * percentage) / 100;
+
+  const animatedValue = useRef(new Animated.Value(0)).current;
+
+  const animatedStrokeDashoffset = animatedValue.interpolate({
+    inputRange: [0, 100],
+    outputRange: [circumference, 0],
+  });
+
+  useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: percentage,
+      duration: 1000,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: false,
+    }).start();
+  }, [percentage]);
 
   return (
     <View style={styles.container}>
       <Svg height={size} width={size} viewBox={`0 0 ${size} ${size}`}>
+        {/* Background Circle */}
         <Circle
           cx={size / 2}
           cy={size / 2}
@@ -27,7 +47,9 @@ const TimeCircleProgress: React.FC<Props> = ({ percentage, totalSpent, timeLabel
           strokeWidth={strokeWidth}
           fill="transparent"
         />
-        <Circle
+
+        {/* Animated Foreground Circle */}
+        <AnimatedCircle
           cx={size / 2}
           cy={size / 2}
           r={radius}
@@ -35,11 +57,13 @@ const TimeCircleProgress: React.FC<Props> = ({ percentage, totalSpent, timeLabel
           strokeWidth={strokeWidth}
           fill="transparent"
           strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
+          strokeDashoffset={animatedStrokeDashoffset}
           strokeLinecap="round"
           transform={`rotate(-90, ${size / 2}, ${size / 2})`}
         />
       </Svg>
+
+      {/* Center Text */}
       <View style={styles.centerText}>
         <Text style={styles.percentage}>{percentage}%</Text>
         {totalSpent !== undefined ? (
@@ -54,10 +78,10 @@ const TimeCircleProgress: React.FC<Props> = ({ percentage, totalSpent, timeLabel
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center', // Move the circle to the left
+    alignItems: 'center',
     justifyContent: 'center',
     marginTop: -80,
-    marginLeft: -10, // Additional margin to move it further left
+    marginLeft: -10,
   },
   centerText: {
     position: 'absolute',
@@ -65,12 +89,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   percentage: {
-    fontSize: 16, // Slightly larger font size for a bigger circle
+    fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.primary,
   },
   amount: {
-    fontSize: 12, // Larger font size
+    fontSize: 12,
     color: COLORS.primary,
     textAlign: 'center',
   },

@@ -1,67 +1,84 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Modal, TextInput, Button } from 'react-native';
+import { View, Text, StyleSheet, Modal, TextInput, Button, TouchableOpacity } from 'react-native';
 import { COLORS } from '../../theme';
 
 interface AddLimitModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onLimitSet: (limit: number, time: string) => void; // Updated to handle time as well
+  onLimitSet: (limit: number, time: string) => void;
 }
 
-const AddLimitModal: React.FC<AddLimitModalProps> = ({ visible, onClose, onLimitSet }) => {
-  const [limit, setLimit] = useState<string>(''); // Store the input value for limit
-  const [time, setTime] = useState<string>(''); // Store the input value for time
-
-  const handleLimitChange = (text: string) => {
-    setLimit(text);
-  };
-
-  const handleTimeChange = (text: string) => {
-    setTime(text);
-  };
+const AddLimitModal: React.FC<AddLimitModalProps> = ({ onLimitSet }) => {
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [limit, setLimit] = useState<string>('');
+  const [time, setTime] = useState<string>('');
 
   const handleSubmit = () => {
     const parsedLimit = parseFloat(limit);
     if (!isNaN(parsedLimit) && parsedLimit > 0 && time) {
-      onLimitSet(parsedLimit, time); // Pass both limit and time to the parent component
-      onClose(); // Close the modal
+      onLimitSet(parsedLimit, time);
+      setModalVisible(false);
+      setLimit('');
+      setTime('');
     } else {
       alert('Please enter valid values for both limit and time');
     }
   };
 
   return (
-    <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Set Your Spending Limit and Time</Text>
-          
-          {/* Input for spending limit */}
-          <TextInput
-            style={styles.input}
-            placeholder="Enter spending limit"
-            keyboardType="numeric"
-            value={limit}
-            onChangeText={handleLimitChange}
-          />
-          
-          {/* Input for time */}
-          <TextInput
-            style={styles.input}
-            placeholder="Enter time (e.g., 7 days, 30 days)"
-            value={time}
-            onChangeText={handleTimeChange}
-          />
-          
-          <Button title="Set Limit and Time" onPress={handleSubmit} />
-          <Button title="Cancel" onPress={onClose} color={COLORS.danger} />
+    <>
+      {/* Set Goal Button */}
+      <TouchableOpacity style={styles.setGoalButton} onPress={() => setModalVisible(true)}>
+        <Text style={styles.setGoalButtonText}>Set Goal</Text>
+      </TouchableOpacity>
+
+      {/* Modal */}
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Set Your Spending Limit and Time</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Enter spending limit"
+              keyboardType="numeric"
+              value={limit}
+              onChangeText={setLimit}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter time (e.g., 7 days)"
+              value={time}
+              onChangeText={setTime}
+            />
+
+            <Button title="Set Limit and Time" onPress={handleSubmit} />
+            <Button title="Cancel" onPress={() => setModalVisible(false)} color={COLORS.danger} />
+          </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
+  setGoalButton: {
+    backgroundColor: COLORS.yellow,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginLeft: 80,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+  },
+  setGoalButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',

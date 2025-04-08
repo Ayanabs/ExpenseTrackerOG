@@ -6,12 +6,14 @@ import Homepage from './homepage/homepage';
 import AnalyticsScreen from './analytics/analytics'; // Adjust the path as needed
 import { enableScreens } from 'react-native-screens';
 import SettingsScreen from './settings/settings'; // Adjust the path as needed
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 enableScreens();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
+    <SafeAreaProvider>
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName="Homepage"
@@ -22,5 +24,6 @@ export default function App() {
         <Stack.Screen name="Settings" component={SettingsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
