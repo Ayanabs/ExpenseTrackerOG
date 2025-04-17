@@ -1,18 +1,19 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
-import { Svg, Circle } from 'react-native-svg';
+import { Svg, Circle, Line } from 'react-native-svg'; // Import the Line component
 import { COLORS } from '../../theme';
 
 // Create an animated Circle component
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 interface Props {
-  percentage: number;
   totalSpent?: number;
+  maxtotal?: number; // Add maxtotal as a prop
   label?: string;
+  percentage?: number;
 }
 
-const CircleProgress: React.FC<Props> = ({ percentage, totalSpent, label }) => {
+const CircleProgress: React.FC<Props> = ({ totalSpent, label, maxtotal }) => {
   const radius = 100;
   const strokeWidth = 40;
   const innerStrokeWidth = 30;
@@ -21,6 +22,9 @@ const CircleProgress: React.FC<Props> = ({ percentage, totalSpent, label }) => {
   const circumference = 2 * Math.PI * radius;
 
   const animatedValue = useRef(new Animated.Value(0)).current;
+
+  // Calculate percentage based on totalSpent and maxtotal
+  const percentage = totalSpent && maxtotal ? (totalSpent / maxtotal) * 100 : 0;
 
   const animatedStrokeDashoffset = animatedValue.interpolate({
     inputRange: [0, 100],
@@ -65,20 +69,38 @@ const CircleProgress: React.FC<Props> = ({ percentage, totalSpent, label }) => {
           cy="125"
           r={radius - strokeWidth / 40}
           stroke="rgba(138, 79, 255, 0.61)"
-          strokeWidth={strokeWidth}
+          strokeWidth={strokeWidth+3}
           fill="transparent"
           strokeDasharray={circumference}
           strokeDashoffset={animatedStrokeDashoffset}
           strokeLinecap="round"
           transform="rotate(-90, 125, 125)"
         />
+
+        {/* Line between the spent and maxtotal */}
+        {totalSpent !== undefined && maxtotal !== undefined && (
+          <Line
+            x1="80"
+            y1="170"
+            x2="175"
+            y2="170"
+            stroke={COLORS.primary}
+            strokeWidth="1.5"
+            strokeDasharray="5,5" // Optional: dashed line
+          />
+        )}
       </Svg>
 
       {/* Center Text */}
       <View style={styles.centerText}>
-        <Text style={styles.percentage}>{percentage}%</Text>
+        <Text style={styles.percentage}>{Math.round(percentage)}%</Text>
         {totalSpent !== undefined ? (
-          <Text style={styles.amount}>Rs.{totalSpent} spent</Text>
+          <>
+            <Text style={styles.amount}>Rs.{totalSpent} spent</Text>
+            {maxtotal !== undefined && (
+              <Text style={[styles.amount, styles.marginTop]}>{`Rs.${maxtotal}`}</Text>
+            )}
+          </>
         ) : label ? (
           <Text style={styles.amount}>{label}</Text>
         ) : null}
@@ -95,6 +117,7 @@ const styles = StyleSheet.create({
     marginRight: -80,
   },
   centerText: {
+    paddingTop: 35,
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
@@ -107,6 +130,10 @@ const styles = StyleSheet.create({
   amount: {
     fontSize: 16,
     color: COLORS.primary,
+  },
+  marginTop: {
+    marginBottom: -3,
+    marginTop: 3, // Add space between the totalSpent and maxtotal
   },
 });
 

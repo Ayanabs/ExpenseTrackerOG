@@ -1,36 +1,27 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { COLORS } from '../../theme';
-import TimeCircleProgress from './timeremainingprogress'; // Adjust path if needed
+import { View } from 'react-native';
+import TimeCircleProgress from './timeremainingprogress';
 
-const TimeRemainingHeader = () => {
-  const timeRemainingPercentage = 40;
-  const timeLabel = '5h 20m';
+interface Props {
+  remainingTime: number;
+  totalDuration: number;
+}
+
+const TimeRemainingHeader: React.FC<Props> = ({ remainingTime, totalDuration }) => {
+  const percentage = totalDuration > 0 ? (remainingTime / totalDuration) * 100 : 0;
+
+  const formatTime = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs}h ${mins}m ${secs}s`;
+  };
 
   return (
-    <View style={styles.container}>
-      <TimeCircleProgress percentage={timeRemainingPercentage} timeLabel={timeLabel} />
-      <Text style={styles.title}>Time Remaining</Text>
+    <View>
+      <TimeCircleProgress percentage={percentage} timeLabel={formatTime(remainingTime)} />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 8,
-    paddingVertical: 10,
-    flexDirection: 'column',
-    alignItems: 'center', // Keep progress circle centered
-  },
-  title: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: COLORS.black,
-    marginTop: 10,
-    marginBottom: 10,
-    alignSelf: 'flex-start', // Align title to the left
-    width: '100%', // Ensures the title has full width to align to the left
-  },
-});
 
 export default TimeRemainingHeader;

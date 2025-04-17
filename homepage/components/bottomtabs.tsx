@@ -61,6 +61,7 @@ const BottomTabs: React.FC<BottomTabsProps> = ({ onAddPress }) => {
                   setActiveTab(tab.key);
                   if (tab.key === 'analytics') navigation.navigate('Analytics');
                   if (tab.key === 'profile') navigation.navigate('Settings');
+                  if (tab.key === 'month') navigation.navigate('MonthTab');
                 }
               }}
             >

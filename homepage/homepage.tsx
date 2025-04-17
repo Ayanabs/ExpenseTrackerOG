@@ -1,111 +1,136 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, StyleSheet, ScrollView, SafeAreaView, StatusBar, Text, Button, TouchableOpacity } from 'react-native';
-import { pickAndProcessImage } from '../ocr'; // Import pickAndProcessImage from ocr.ts
-import SmsParser from '../smsparser'; // Import SmsParser as a React component
-import CircularProgress from './components/circularprogress'; // Import CircularProgress
-import CategoryListContainer from './components/categorylist'; // Import CategoryListContainer
-import TimeRemainingHeader from './components/timeremainingheader'; // Import TimeRemainingHeader
-import Header from './components/header'; // Import Header
-import { COLORS } from '../theme'; // Import theme
-import { Category } from './components/category'; // Import Category type
-import BottomTabs from './components/bottomtabs'; // Import BottomTabs
-import AddLimitModal from './components/addlimit'; // Import AddLimitModal component
-import { NavigationContainer } from '@react-navigation/native';
-import { Platform } from 'react-native';
+import {
+  View, Image, StyleSheet, ScrollView, StatusBar, Text, Platform, TouchableOpacity
+} from 'react-native';
+import { pickAndProcessImage } from '../ocr';
+import SmsParser from '../smsparser';
+import CircularProgress from './components/circularprogress';
+import CategoryListContainer from './components/categorylist';
+import TimeRemainingHeader from './components/timeremainingheader';
+import Header from './components/header';
+import { COLORS } from '../theme';
+import BottomTabs from './components/bottomtabs';
+import AddLimitModal from './components/setgoal';
+import { useFocusEffect } from '@react-navigation/native';
+import { getCurrentSpendingLimitPeriod, updateSpendingLimitPeriod } from './realmHelpers';
+import { useRealm } from '@realm/react';
+import { SafeAreaProvider, SafeAreaView as CustomSafeAreaView } from 'react-native-safe-area-context';
+import { observeSpendingLimitTotal } from './observeSpendingLimitTotal';
+
 
 export default function Homepage() {
+  const realm = useRealm();
+
   const [imageUri, setImageUri] = useState<string | null>(null);
-  const [totalAmount, setTotalAmount] = useState<number | null>(null); // Amount detected from the image
-  const [currency, setCurrency] = useState<string | null>(null);
-  const [totalSpent, setTotalSpent] = useState<number>(0); // Dynamically set the total spent value
-  const [spentPercentage] = useState(60); // This could be calculated based on totalSpent and limits in the future
-  
-  const [modalVisible, setModalVisible] = useState<boolean>(false); // To manage the visibility of the modal
+  const [totalSpent, setTotalSpent] = useState<number>(0);
+  const [maxtotal, setMaxtotal] = useState<number>(0);
+  const [spentPercentage, setSpentPercentage] = useState<number>(0);
+  const [smsText, setSmsText] = useState<string>('');
+  const [extractedAmount, setExtractedAmount] = useState<string | null>(null);
+  const [remainingTime, setRemainingTime] = useState<number>(0);
+  const [totalDuration, setTotalDuration] = useState<number>(0);
 
-  const [smsText, setSmsText] = useState<string>(''); // State for SMS content
-  const [extractedAmount, setExtractedAmount] = useState<string | null>(null); // State for extracted amount
-
-  // Using useEffect to update totalSpent whenever totalAmount changes
   useEffect(() => {
-    if (totalAmount !== null) {
-      setTotalSpent(totalAmount); // Dynamically update totalSpent based on image amount
+    let unsubscribe: () => void = () => {};
+  
+    const observeTotal = async () => {
+      const result = await observeSpendingLimitTotal(realm, setTotalSpent);
+      if (result) unsubscribe = result;
+    };
+  
+    observeTotal();
+  
+    return () => {
+      unsubscribe();
+    };
+  }, [realm]);
+  
+  
+
+  useEffect(() => {
+    if (maxtotal > 0 && totalSpent >= 0) {
+      setSpentPercentage((totalSpent / maxtotal) * 100);
     }
-  }, [totalAmount]); // This will run whenever totalAmount changes
+  }, [totalSpent, maxtotal]);
 
-  // Callback to update SMS content
-  const handleSmsReceived = (sms: string) => {
-    setSmsText(sms);
+  const updateTimeRemaining = async () => {
+    const currentPeriod = await getCurrentSpendingLimitPeriod(realm);
+
+    if (currentPeriod) {
+      const now = new Date().getTime();
+      const end = new Date(currentPeriod.endDate).getTime();
+      const start = new Date(currentPeriod.startDate).getTime();
+      setRemainingTime(Math.max(0, Math.floor((end - now) / 1000)));
+      setTotalDuration(Math.floor((end - start) / 1000));
+    }
   };
 
-  // Callback to update extracted amount
-  const handleAmountExtracted = (amount: string) => {
-    setExtractedAmount(amount);
-  };
+  useEffect(() => {
+    updateTimeRemaining();
+    const interval = setInterval(updateTimeRemaining, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  // Function to trigger image picker and set the total spent amount
+  useEffect(() => {
+    const fetchSpendingLimit = async () => {
+      const currentPeriod = await getCurrentSpendingLimitPeriod(realm);
+      if (currentPeriod) {
+        setMaxtotal(currentPeriod.limit);
+      }
+    };
+
+    fetchSpendingLimit();
+  }, []);
+
+  const handleSmsReceived = (sms: string) => setSmsText(sms);
+  const handleAmountExtracted = (amount: string) => setExtractedAmount(amount);
+
   const handleAddPress = () => {
-    pickAndProcessImage(setImageUri, setTotalAmount, setCurrency);
+    pickAndProcessImage(
+      setImageUri,
+      amt => setTotalSpent(amt ?? 0),
+      () => { },
+      () => { },
+      realm
+    );
   };
 
-  const handleLimitSet = (newLimit: number) => {
-    console.log('New limit set:', newLimit); // This is where you would update the state with the new limit
+  const handleLimitSet = async (newLimit: number) => {
+    const currentPeriod = await getCurrentSpendingLimitPeriod(realm);
+    if (currentPeriod) {
+      await updateSpendingLimitPeriod(realm, currentPeriod.startDate, currentPeriod.endDate, newLimit);
+    }
+    setMaxtotal(newLimit);
+    updateTimeRemaining();
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" />
-      
-     
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-         {/* Header Component */}
-      <Header />
-      
-        {/* Image Picker Section
-        {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
-         */}
-        {/* Circle Progress for Expense Tracker */}
-        <CircularProgress percentage={spentPercentage} totalSpent={totalSpent} />
+    <SafeAreaProvider>
+      <CustomSafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="light-content" />
 
-        {/* View to place TimeRemainingHeader and AddLimit next to each other */}
-        <View style={styles.row}>
-          {/* Time Remaining Header */}
-          <TimeRemainingHeader />
-          
-          {/* Add Limit Button */}
-          <AddLimitModal onLimitSet={handleLimitSet} />
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <Header />
+          <CircularProgress percentage={spentPercentage} totalSpent={totalSpent} maxtotal={maxtotal} />
+          <View style={styles.row}>
+            <TimeRemainingHeader remainingTime={remainingTime} totalDuration={totalDuration} />
+            <AddLimitModal onLimitSet={handleLimitSet} />
+          </View>
 
+          <CategoryListContainer />
 
+          <View style={styles.smsContainer}>
+            <Text style={styles.smsText}>Received SMS: {smsText}</Text>
+            <Text style={styles.smsText}>
+              Extracted Amount: {extractedAmount ? extractedAmount : 'No amount detected'}
+            </Text>
+          </View>
+        </ScrollView>
 
-        </View>
-
-        {/* Category List */}
-        <CategoryListContainer />
-
-        {/* SMS Content and Extracted Amount */}
-        <View style={styles.smsContainer}>
-          <Text style={styles.smsText}>Received SMS: {smsText}</Text>
-          <Text style={styles.smsText}>
-            Extracted Amount: {extractedAmount ? extractedAmount : 'No amount detected'}
-          </Text>
-        </View>
-      </ScrollView>
-
-     
-     
-
-      {/* Include the SmsParser component */}
-      <SmsParser
-        onSmsReceived={handleSmsReceived}
-        onAmountExtracted={handleAmountExtracted}
-      />
-
-       {/* AddLimitModal with visibility and onClose handlers */}
-       <AddLimitModal onLimitSet={handleLimitSet} />
-
-       
-      {/* Bottom Tabs with onAddPress prop */}
-      <BottomTabs onAddPress={handleAddPress} />
-    </SafeAreaView>
+        <SmsParser onSmsReceived={handleSmsReceived} onAmountExtracted={handleAmountExtracted} />
+        <BottomTabs onAddPress={handleAddPress} />
+      </CustomSafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
@@ -113,18 +138,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.background,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    
   },
   scrollContent: {
-    
     paddingBottom: 20,
-  },
-  image: {
-    width: 250,
-    height: 250,
-    marginBottom: 20,
-    borderRadius: 10,
   },
   smsContainer: {
     marginTop: 30,
@@ -133,6 +149,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#e3e3e3',
     width: '80%',
     alignItems: 'center',
+    alignSelf: 'center',
   },
   smsText: {
     fontSize: 16,
@@ -143,24 +160,4 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
   },
-  setGoalButton: {
-    backgroundColor: COLORS.yellow,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    marginLeft: 80,
-    borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 3, // Android shadow
-    shadowColor: '#000', // iOS shadow
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-  },
-  setGoalButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  
 });

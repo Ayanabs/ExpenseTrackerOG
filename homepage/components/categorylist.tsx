@@ -1,89 +1,105 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import CategoryItem from './categoryitem';
-import { COLORS } from '../../theme';
-import { Category } from './category';
+import React, { useState, useEffect } from 'react';
+import { View, FlatList, Text, StyleSheet } from 'react-native';
+import { useRealm, useQuery } from '@realm/react';
+import { Expense } from '../../database/expenses';  // Adjust the import path
+import { Category } from './category';  // Assuming Category type is defined elsewhere
+import { getCurrentSpendingLimitPeriod } from '../realmHelpers';  // Adjust the import path
 
-const CategoryListContainer: React.FC = () => {
-  const [expanded, setExpanded] = useState(true);
+const CategoryList: React.FC = () => {
+  const realm = useRealm();
+  const allExpenses = useQuery(Expense);
 
-  // Local categories array moved from Homepage
-  const [categories] = useState<Category[]>([
-    {
-      name: 'Groceries',
-      spent: 3500,
-      limit: 5000,
-      icon: 'cart',
-      color: COLORS.success,
-      id: '',
-    },
-    {
-      name: 'Transport',
-      spent: 2000,
-      limit: 1500,
-      icon: 'taxi',
-      color: COLORS.danger,
-      id: '',
-    },
-    {
-      name: 'Entertainment',
-      spent: 500,
-      limit: 1000,
-      icon: 'gamepad',
-      color: COLORS.warning,
-      id: '',
-    },
-  ]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [spendingLimit, setSpendingLimit] = useState<number>(0);
+
+  // Group expenses by category
+  useEffect(() => {
+    const groupExpensesByCategory = () => {
+      const groupedByCategory: { [key: string]: number } = {};
+
+      // Loop through all expenses and group by category
+      allExpenses.forEach((expense: Expense) => {
+        if (expense.category) {
+          groupedByCategory[expense.category] =
+            (groupedByCategory[expense.category] || 0) + expense.amount;
+        }
+      });
+
+      // Convert grouped data into category objects
+      const categoryList = Object.keys(groupedByCategory).map((name, index) => ({
+        id: index.toString(),  // Generate a unique id
+        name,
+        totalSpent: groupedByCategory[name],
+        limit: 0,  // Default limit or fetch from a relevant source
+        spent: groupedByCategory[name],  // Assuming totalSpent is the same as spent
+        icon: 'cash',  // Use a default icon or define custom icons per category
+        color: '#000000',  // Default color or define per category
+      }));
+
+      setCategories(categoryList);
+    };
+
+    groupExpensesByCategory();
+  }, [allExpenses]);
+
+  // Fetch the spending limit
+  useEffect(() => {
+    const fetchSpendingLimit = async () => {
+      const limitPeriod = await getCurrentSpendingLimitPeriod(realm);
+      if (limitPeriod) {
+        setSpendingLimit(limitPeriod.limit);  // Set the spending limit
+      }
+    };
+
+    fetchSpendingLimit();
+  }, [realm]);
 
   return (
-    <View>
-      {/* Chevron Button OUTSIDE the card container */}
-      <TouchableOpacity
-        style={styles.chevronWrapper}
-        onPress={() => setExpanded(!expanded)}
-      >
-        <Icon
-          name={expanded ? 'chevron-up' : 'chevron-down'}
-          size={30}
-          color={COLORS.black}
-        />
-      </TouchableOpacity>
-
-      {/* Card-style container */}
-      {expanded && (
-        <View style={styles.wrapper}>
-          <Text style={styles.title}>Categories</Text>
-          {categories.map((category, index) => (
-            <CategoryItem key={index} category={category} />
-          ))}
-        </View>
-      )}
+    <View style={styles.container}>
+      <Text style={styles.title}>Categories</Text>
+      <FlatList
+        data={categories}
+        keyExtractor={(item: any) => item.name}  // Use name as key
+        renderItem={({ item }) => (
+          <View style={styles.categoryItem}>
+            <Text style={[styles.categoryText, { color: item.color }]}>
+              {item.name} - 💰 {item.totalSpent.toFixed(2)}
+            </Text>
+            {/* You can add category icons here if you'd like */}
+            <Text>{item.icon}</Text>
+          </View>
+        )}
+        ListEmptyComponent={<Text style={styles.empty}>No categories found.</Text>}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  chevronWrapper: {
-    alignSelf: 'flex-start',
-    marginLeft: 25,
-    marginBottom: -7,
-  },
-  wrapper: {
-    backgroundColor: COLORS.card,
-   
-    borderTopEndRadius: 35,
-    borderTopStartRadius: 35,
-    padding: 25,
-    paddingTop: 9,
-    width: '100%',
+  container: {
+    flex: 1,
+    padding: 20,
   },
   title: {
-    fontSize: 16,
-    color: COLORS.white,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 12,
+    marginBottom: 10,
+  },
+  categoryItem: {
+    marginBottom: 15,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: '#f0f0f0',
+  },
+  categoryText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  empty: {
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
 
-export default CategoryListContainer;
+export default CategoryList;
