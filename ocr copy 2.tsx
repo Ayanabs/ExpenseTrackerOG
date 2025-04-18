@@ -9,8 +9,7 @@ const processImage = async (
   uri: string,
   setTotalAmount: (amount: number | null) => void,
   setCurrency: (currency: string | null) => void,
-  setCategory: (category: string | null) => void,
-  realm: Realm
+  setCategory: (category: string | null) => void
 ) => {
   try {
     const formData = new FormData();
@@ -23,7 +22,7 @@ const processImage = async (
       type: `image/${fileType}`,
     } as any); // React Native types workaround
 
-    const response = await fetch('https://ocr-llamaa-production.up.railway.app/ocr', {
+    const response = await fetch('https://ocr-py-production.up.railway.app/ocr', {
       method: 'POST',
       body: formData,
       headers: {
@@ -37,11 +36,13 @@ const processImage = async (
     console.log('OCR response:', data);
 
     const amount = data.total ?? null;
-    const date = data.date ? new Date(data.date) : new Date();
+    const date = data.date ? new Date(data.date) : new Date(); // fallback to now
     const currency = data.currency ?? null;
     const category = data.category ?? 'Uncategorized';
 
     if (amount) {
+      const realm = await Realm.open({ schema: [Expense] });
+
       realm.write(() => {
         realm.create('Expense', {
           _id: new Realm.BSON.ObjectId(),
@@ -71,8 +72,7 @@ export const pickAndProcessImage = async (
   setImageUri: (uri: string | null) => void,
   setTotalAmount: (amount: number | null) => void,
   setCurrency: (currency: string | null) => void,
-  setCategory: (category: string | null) => void,
-  realm: Realm // 🔥 pass realm from the calling component
+  setCategory: (category: string | null) => void
 ) => {
   let result = await ImagePicker.launchImageLibrary({
     mediaType: 'photo',
@@ -84,7 +84,7 @@ export const pickAndProcessImage = async (
     const uri = result.assets[0].uri ?? null;
     setImageUri(uri);
     if (uri) {
-      await processImage(uri, setTotalAmount, setCurrency, setCategory, realm);
+      await processImage(uri, setTotalAmount, setCurrency, setCategory);
     }
   }
 };
