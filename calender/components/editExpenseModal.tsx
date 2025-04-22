@@ -6,8 +6,7 @@ type Props = {
   expenses: any[]; // Expenses will be of type any[]
   onEdit: (expense: any) => void; // Accepting a general expense object
   onDelete: (expense: any) => void; // Accepting a general expense object
-  onClose: () => void; // Add the onClose property to the Props type
-  
+  onClose: () => void;
 };
 
 const ExpenseList: React.FC<Props> = ({ expenses, onEdit, onDelete }) => {

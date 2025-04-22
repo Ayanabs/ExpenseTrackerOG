@@ -1,7 +1,7 @@
 import { useRealm } from '@realm/react';
 import { Expense } from '../../database/expenses';
 import { Category } from './category';
-import { getCurrentSpendingLimitPeriod } from '../realmHelpers'; // adjust the path if needed
+import { getCurrentSpendingLimitPeriod } from '../../database/realmHelpers'; // adjust the path if needed
 
 // Define category metadata
 const categoryMeta: Record<string, { icon: string; color: string }> = {

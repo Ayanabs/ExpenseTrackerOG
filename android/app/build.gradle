@@ -116,5 +116,11 @@ dependencies {
     } else {
         implementation jscFlavor
     }
-  
+   // Firebase BoM
+    implementation platform('com.google.firebase:firebase-bom:33.12.0')
+
+    // Firebase Analytics as example
+    implementation 'com.google.firebase:firebase-analytics'
 }
+
+apply plugin: 'com.google.gms.google-services'

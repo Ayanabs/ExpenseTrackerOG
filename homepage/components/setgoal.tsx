@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, StyleSheet } from 'react-native';
-import { createSpendingLimitPeriod } from '../realmHelpers';
-import { useRealm } from '@realm/react';
 
-export default function AddLimitModal({ onLimitSet }: { onLimitSet: (limit: number) => void }) {
-  const realm = useRealm();
+export default function AddLimitModal({ onLimitSet }: { onLimitSet: (data: { limit: number; days: number; hours: number }) => void }) {
   const [totalLimit, setTotalLimit] = useState<number>(0);
   const [days, setDays] = useState<number>(0);
   const [hours, setHours] = useState<number>(0);
   const [showInputs, setShowInputs] = useState<boolean>(false);
 
-  const handleSetLimit = () => {
-    const startDate = new Date();
-    const endDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000 + hours * 60 * 60 * 1000);
-    createSpendingLimitPeriod(realm, startDate, endDate, totalLimit);
-    onLimitSet(totalLimit);
-    setShowInputs(false); // hide inputs after setting limit
+  const handleSetLimitClick = async () => {
+    // Call the onLimitSet function with only the new limit
+    onLimitSet({ limit: totalLimit, days, hours });
+
+    // You can handle the logic of calculating the endDate here inside Homepage.tsx
+    // and update Firestore with the startDate, endDate, and totalLimit
+    setShowInputs(false); // Close inputs after setting limit
   };
 
   return (
@@ -44,7 +42,7 @@ export default function AddLimitModal({ onLimitSet }: { onLimitSet: (limit: numb
             value={hours.toString()}
             onChangeText={(text) => setHours(Number(text))}
           />
-          <Button title="Set Limit" onPress={handleSetLimit} />
+          <Button title="Set Limit" onPress={handleSetLimitClick} />
         </View>
       )}
     </View>
