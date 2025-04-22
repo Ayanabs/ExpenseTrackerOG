@@ -1,23 +1,33 @@
-import React from 'react'; 
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'; 
+// MonthSelector component
+import React, { useState } from 'react'; 
+import { ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native'; 
 import { COLORS } from '../../theme'; 
- 
 
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']; 
- 
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']; 
 
-const MonthSelector = () => { 
+const MonthSelector = ({ onMonthSelect }: { onMonthSelect: (month: number) => void }) => {
+  const currentMonth = new Date().getMonth();  // Get the current month (0-11)
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);  // Default to the current month
+
   return ( 
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.container}> 
       {months.map((month, index) => ( 
-        <TouchableOpacity key={index} style={[styles.chip, index === 0 && styles.activeChip]}> 
-          <Text style={[styles.chipText, index === 0 && styles.activeChipText]}>{month}</Text> 
+        <TouchableOpacity 
+          key={index} 
+          style={[styles.chip, index === selectedMonth && styles.activeChip]} 
+          onPress={() => {
+            setSelectedMonth(index);  // Update the selected month when clicked
+            onMonthSelect(index); // Pass selected month to parent
+          }}
+        >
+          <Text style={[styles.chipText, index === selectedMonth && styles.activeChipText]}>
+            {month}
+          </Text> 
         </TouchableOpacity> 
       ))} 
     </ScrollView> 
   ); 
 }; 
- 
 
 const styles = StyleSheet.create({ 
   container: { 
@@ -42,7 +52,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold', 
   }, 
 }); 
- 
 
-export default MonthSelector; 
- 
+export default MonthSelector;

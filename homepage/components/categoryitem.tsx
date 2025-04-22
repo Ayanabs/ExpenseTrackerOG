@@ -1,20 +1,18 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { COLORS } from '../../theme'; // Ensure your theme is defined properly
-import { Category } from './category'; // Assuming Category type is defined elsewhere
+import { COLORS } from '../../theme';  // Ensure your theme is defined properly
+import { Category } from '../components/Category';  // Assuming the Category interface is defined in your app
 
-// Define the props type for CategoryItem to ensure we get the correct data
 const CategoryItem: React.FC<{ category: Category }> = ({ category }) => {
-  // Calculate percentage and remaining amount
   const percentage = (category.spent / category.limit) * 100;
   const left = category.limit - category.spent;
-  const isExceeded = left < 0;
+  const isExceeded = left < 0;  // Check if the limit is exceeded
 
   return (
     <View style={styles.card}>
       <View style={styles.row}>
-        <View style={[styles.iconWrapper, { backgroundColor: `${category.color}20` }]}>
+        <View style={[styles.iconWrapper, { backgroundColor: category.color + '20' }]}>
           <Icon name={category.icon} size={24} color={category.color} />
         </View>
         <View style={styles.info}>
@@ -44,10 +42,9 @@ const CategoryItem: React.FC<{ category: Category }> = ({ category }) => {
   );
 };
 
-// Styles for the component
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.card, // Background color from theme
+    backgroundColor: COLORS.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -70,27 +67,27 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: COLORS.white, // Text color from theme
+    color: COLORS.white,
   },
   spent: {
     fontSize: 13,
-    color: COLORS.gray, // Text color from theme
+    color: COLORS.gray,
   },
   rightSide: {
     marginTop: 10,
   },
   left: {
-    color: COLORS.success, // Success color from theme
+    color: COLORS.success,
     marginBottom: 6,
   },
   over: {
-    color: COLORS.danger, // Danger color from theme
+    color: COLORS.danger,
     marginBottom: 6,
   },
   barBackground: {
     width: '100%',
     height: 6,
-    backgroundColor: '#333333', // Dark background for progress bar
+    backgroundColor: '#333333',
     borderRadius: 4,
   },
 });

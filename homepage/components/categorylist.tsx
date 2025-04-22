@@ -10,11 +10,11 @@ interface CategoryListContainerProps {
 const CategoryListContainer: React.FC<CategoryListContainerProps> = ({ categories }) => {
   return (
     <View style={styles.container}>
-      {/* Loop through each category and display it */}
+      {/* Render all categories in a single FlatList container */}
       <FlatList
-        data={categories} // Assuming categories are passed as an array
-        keyExtractor={(item: Category) => item.id.toString()} // Use 'id' for each category
-        renderItem={({ item }) => <CategoryItem category={item} />} // Pass category to CategoryItem
+        data={categories} // Categories data passed from the parent component
+        keyExtractor={(item) => item.id.toString()} // Use 'id' for each category item
+        renderItem={({ item }) => <CategoryItem category={item} />} // Pass each category to CategoryItem for rendering
       />
     </View>
   );
@@ -23,14 +23,7 @@ const CategoryListContainer: React.FC<CategoryListContainerProps> = ({ categorie
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-  },
-  categoryContainer: {
-    marginBottom: 20,
-  },
-  categoryTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    padding: 20,  // Adjust padding as needed
   },
 });
 

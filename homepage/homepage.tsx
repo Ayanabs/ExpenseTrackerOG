@@ -13,6 +13,7 @@ import BottomTabs from './components/bottomtabs';
 import firestore from '@react-native-firebase/firestore';
 import { getGroupedExpensesByCategory } from './components/categorygroupexpense';
 
+
 export default function Homepage() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [totalSpent, setTotalSpent] = useState<number>(0);
