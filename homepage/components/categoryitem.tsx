@@ -14,7 +14,7 @@ const CategoryItem: React.FC<{ category: Category }> = ({ category }) => {
   return (
     <View style={styles.card}>
       <View style={styles.row}>
-        <View style={[styles.iconWrapper, { backgroundColor: category.color + '20' }]}>
+        <View style={[styles.iconWrapper, { backgroundColor: `${category.color}20` }]}>
           <Icon name={category.icon} size={24} color={category.color} />
         </View>
         <View style={styles.info}>
@@ -25,14 +25,14 @@ const CategoryItem: React.FC<{ category: Category }> = ({ category }) => {
 
       <View style={styles.rightSide}>
         {isExceeded ? (
-          <Text style={styles.over}>Limit is exceeded - Rs.{Math.abs(left)}</Text>
+          <Text style={styles.over}>Limit exceeded by Rs.{Math.abs(left)}</Text>
         ) : (
           <Text style={styles.left}>Left: Rs.{left}</Text>
         )}
         <View style={styles.barBackground}>
           <View
             style={{
-              width: `${Math.min(percentage, 100)}%`,
+              width: `${Math.min(percentage, 100)}%`, // Ensure the width is capped at 100%
               height: 6,
               borderRadius: 4,
               backgroundColor: isExceeded ? COLORS.danger : category.color,

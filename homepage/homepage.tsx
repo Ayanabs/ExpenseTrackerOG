@@ -11,6 +11,7 @@ import Header from './components/header';
 import AddLimitModal from './components/setgoal';
 import BottomTabs from './components/bottomtabs'; 
 import firestore from '@react-native-firebase/firestore';
+import { getGroupedExpensesByCategory } from './components/categorygroupexpense';
 
 export default function Homepage() {
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -47,15 +48,16 @@ export default function Homepage() {
   };
 
   // Fetch category data from Firestore
-  const fetchCategories = async () => {
-    try {
-      const categorySnapshot = await firestore().collection('categories').get();
-      const categoryData = categorySnapshot.docs.map(doc => doc.data());
-      setCategories(categoryData); // Update state with fetched categories
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
+  useEffect(() => {
+    const loadCategories = async () => {
+      const categories = await getGroupedExpensesByCategory(); // Fetch the grouped expenses by category
+      console.log('Grouped Categories:', categories);
+      setCategories(categories); // Set the categories data into state
+    };
+  
+    loadCategories();
+  }, []);
+  
 
   // Calculate the total spent within the current period
   const calculateTotalSpent = async (startDate: Date, endDate: Date) => {
@@ -76,7 +78,6 @@ export default function Homepage() {
 
   useEffect(() => {
     fetchSpendingLimit(); // Fetch spending limit and calculate the total spent when the component mounts
-    fetchCategories(); // Fetch categories when the component mounts
   }, []);
 
   // Timer countdown logic
@@ -153,7 +154,7 @@ export default function Homepage() {
       </View>
 
       {/* Pass categories data to CategoryListContainer */}
-      <CategoryListContainer categories={categories} groupedExpenses={{}} />
+      <CategoryListContainer categories={categories} />
 
       <View style={styles.smsContainer}>
         <Text style={styles.smsText}>Received SMS: {smsText}</Text>

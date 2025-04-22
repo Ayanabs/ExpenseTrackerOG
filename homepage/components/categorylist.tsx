@@ -1,26 +1,21 @@
 import React from 'react';
 import { FlatList, View, Text, StyleSheet } from 'react-native';
-import { Expense } from '../../database/expense';
+import { Category } from './category'; // Assuming Category type is defined in your app
 import CategoryItem from './categoryitem'; // Assuming you have a CategoryItem component
 
 interface CategoryListContainerProps {
-  groupedExpenses: { [key: string]: Expense[] }; // Grouped expenses by category
-  categories: any[];
+  categories: Category[]; // Categories prop is expected to be an array of Category objects
 }
 
-const CategoryListContainer: React.FC<CategoryListContainerProps> = ({ groupedExpenses }) => {
+const CategoryListContainer: React.FC<CategoryListContainerProps> = ({ categories }) => {
   return (
     <View style={styles.container}>
-      {Object.keys(groupedExpenses).map((category) => (
-        <View key={category} style={styles.categoryContainer}>
-          <Text style={styles.categoryTitle}>{category}</Text>
-          <FlatList
-            data={groupedExpenses[category]} // Get expenses for each category
-            keyExtractor={(item: any) => item.id.toString()}
-            renderItem={({ item }) => <CategoryItem category={item} />}
-          />
-        </View>
-      ))}
+      {/* Loop through each category and display it */}
+      <FlatList
+        data={categories} // Assuming categories are passed as an array
+        keyExtractor={(item: Category) => item.id.toString()} // Use 'id' for each category
+        renderItem={({ item }) => <CategoryItem category={item} />} // Pass category to CategoryItem
+      />
     </View>
   );
 };
