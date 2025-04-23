@@ -1,12 +1,13 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Category } from './category'; // Category type
+import { COLORS } from '../../theme';  // Ensure your theme is defined properly
+import { Category } from '../components/Category';  // Assuming the Category interface is defined in your app
 
 const CategoryItem: React.FC<{ category: Category }> = ({ category }) => {
   const percentage = (category.spent / category.limit) * 100;
   const left = category.limit - category.spent;
-  const isExceeded = left < 0;
+  const isExceeded = left < 0;  // Check if the limit is exceeded
 
   return (
     <View style={styles.card}>
@@ -19,19 +20,20 @@ const CategoryItem: React.FC<{ category: Category }> = ({ category }) => {
           <Text style={styles.spent}>Rs.{category.spent} of Rs.{category.limit}</Text>
         </View>
       </View>
+
       <View style={styles.rightSide}>
         {isExceeded ? (
-          <Text style={styles.over}>Limit is exceeded - Rs.{Math.abs(left)}</Text>
+          <Text style={styles.over}>Limit exceeded by Rs.{Math.abs(left)}</Text>
         ) : (
           <Text style={styles.left}>Left: Rs.{left}</Text>
         )}
         <View style={styles.barBackground}>
           <View
             style={{
-              width: `${Math.min(percentage, 100)}%`,
+              width: `${Math.min(percentage, 100)}%`, // Ensure the width is capped at 100%
               height: 6,
               borderRadius: 4,
-              backgroundColor: isExceeded ? '#F44336' : category.color, // Color change if limit exceeded
+              backgroundColor: isExceeded ? COLORS.danger : category.color,
             }}
           />
         </View>
@@ -42,7 +44,7 @@ const CategoryItem: React.FC<{ category: Category }> = ({ category }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#333333', // Replace with your theme color
+    backgroundColor: COLORS.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -65,27 +67,27 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFFFFF', // Your text color
+    color: COLORS.white,
   },
   spent: {
     fontSize: 13,
-    color: '#AFAFAF', // Gray color
+    color: COLORS.gray,
   },
   rightSide: {
     marginTop: 10,
   },
   left: {
-    color: '#4CAF50', // Success color
+    color: COLORS.success,
     marginBottom: 6,
   },
   over: {
-    color: '#F44336', // Danger color
+    color: COLORS.danger,
     marginBottom: 6,
   },
   barBackground: {
     width: '100%',
     height: 6,
-    backgroundColor: '#555555', // Dark background color for progress bar
+    backgroundColor: '#333333',
     borderRadius: 4,
   },
 });

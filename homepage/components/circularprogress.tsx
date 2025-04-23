@@ -40,6 +40,9 @@ const CircleProgress: React.FC<Props> = ({ totalSpent, label, maxtotal }) => {
     }).start();
   }, [percentage]);
 
+  // Format totalSpent to 2 decimal places
+  const formattedTotalSpent = totalSpent ? totalSpent.toFixed(2) : '0.00';
+
   return (
     <View style={styles.container}>
       <Svg height="250" width="250" viewBox="0 0 250 250">
@@ -69,7 +72,7 @@ const CircleProgress: React.FC<Props> = ({ totalSpent, label, maxtotal }) => {
           cy="125"
           r={radius - strokeWidth / 40}
           stroke="rgba(138, 79, 255, 0.61)"
-          strokeWidth={strokeWidth+3}
+          strokeWidth={strokeWidth + 3}
           fill="transparent"
           strokeDasharray={circumference}
           strokeDashoffset={animatedStrokeDashoffset}
@@ -96,7 +99,7 @@ const CircleProgress: React.FC<Props> = ({ totalSpent, label, maxtotal }) => {
         <Text style={styles.percentage}>{Math.round(percentage)}%</Text>
         {totalSpent !== undefined ? (
           <>
-            <Text style={styles.amount}>Rs.{totalSpent} spent</Text>
+            <Text style={styles.amount}>Rs.{formattedTotalSpent} spent</Text>
             {maxtotal !== undefined && (
               <Text style={[styles.amount, styles.marginTop]}>{`Rs.${maxtotal}`}</Text>
             )}

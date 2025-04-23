@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -80,
-    marginLeft: -10,
+    marginLeft: 10,
   },
   centerText: {
     position: 'absolute',

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Image, StyleSheet, ScrollView, StatusBar, Text, Platform, TouchableOpacity
+  View, ScrollView, StatusBar, Text, StyleSheet
 } from 'react-native';
 import { pickAndProcessImage } from '../ocr';
 import SmsParser from '../smsparser';
@@ -8,139 +8,182 @@ import CircularProgress from './components/circularprogress';
 import CategoryListContainer from './components/categorylist';
 import TimeRemainingHeader from './components/timeremainingheader';
 import Header from './components/header';
-import { COLORS } from '../theme';
-import BottomTabs from './components/bottomtabs';
 import AddLimitModal from './components/setgoal';
-import { useFocusEffect } from '@react-navigation/native';
-import { getCurrentSpendingLimitPeriod, updateSpendingLimitPeriod } from './realmHelpers';
-import { useRealm } from '@realm/react';
-import { SafeAreaProvider, SafeAreaView as CustomSafeAreaView } from 'react-native-safe-area-context';
-import { observeSpendingLimitTotal } from './observeSpendingLimitTotal';
+import BottomTabs from './components/bottomtabs'; 
+import firestore from '@react-native-firebase/firestore';
+import { getGroupedExpensesByCategory } from './components/categorygroupexpense';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { COLORS } from '../theme';
 
 
 export default function Homepage() {
-  const realm = useRealm();
-
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [totalSpent, setTotalSpent] = useState<number>(0);
   const [maxtotal, setMaxtotal] = useState<number>(0);
   const [spentPercentage, setSpentPercentage] = useState<number>(0);
-  const [smsText, setSmsText] = useState<string>('');
+  const [smsText, setSmsText] = useState<string>('');  // To display received SMS
   const [extractedAmount, setExtractedAmount] = useState<string | null>(null);
-  const [remainingTime, setRemainingTime] = useState<number>(0);
-  const [totalDuration, setTotalDuration] = useState<number>(0);
+  const [remainingTime, setRemainingTime] = useState<number>(0); // Remaining time in seconds
+  const [totalDuration, setTotalDuration] = useState<number>(0); // Total duration in seconds
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [categories, setCategories] = useState<any[]>([]); // State to hold categories data
 
-  useEffect(() => {
-    let unsubscribe: () => void = () => {};
-  
-    const observeTotal = async () => {
-      const result = await observeSpendingLimitTotal(realm, setTotalSpent);
-      if (result) unsubscribe = result;
-    };
-  
-    observeTotal();
-  
-    return () => {
-      unsubscribe();
-    };
-  }, [realm]);
-  
-  
-
-  useEffect(() => {
-    if (maxtotal > 0 && totalSpent >= 0) {
-      setSpentPercentage((totalSpent / maxtotal) * 100);
+  // Fetch the current spending limit from Firestore
+  const fetchSpendingLimit = async () => {
+    try {
+      const spendingLimitDoc = await firestore().collection('spendingLimits').doc('currentLimit').get();
+      if (spendingLimitDoc.exists) {
+        const spendingLimitData = spendingLimitDoc.data();
+        if (spendingLimitData) {
+          setMaxtotal(spendingLimitData.limit);
+          const start = spendingLimitData.startDate.toDate();
+          const end = spendingLimitData.endDate.toDate();
+          setStartDate(start);
+          setEndDate(end);
+          setTotalDuration(Math.floor((end.getTime() - start.getTime()) / 1000)); // Set total duration in seconds
+          calculateTotalSpent(start, end);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching spending limit:', error);
     }
-  }, [totalSpent, maxtotal]);
+  };
 
-  const updateTimeRemaining = async () => {
-    const currentPeriod = await getCurrentSpendingLimitPeriod(realm);
+  // Fetch category data from Firestore
+  useEffect(() => {
+    const loadCategories = async () => {
+      const categories = await getGroupedExpensesByCategory(); // Fetch the grouped expenses by category
+      console.log('Grouped Categories:', categories);
+      setCategories(categories); // Set the categories data into state
+    };
+  
+    loadCategories();
+  }, []);
+  
 
-    if (currentPeriod) {
-      const now = new Date().getTime();
-      const end = new Date(currentPeriod.endDate).getTime();
-      const start = new Date(currentPeriod.startDate).getTime();
-      setRemainingTime(Math.max(0, Math.floor((end - now) / 1000)));
-      setTotalDuration(Math.floor((end - start) / 1000));
+  // Calculate the total spent within the current period
+  const calculateTotalSpent = async (startDate: Date, endDate: Date) => {
+    try {
+      const snapshot = await firestore().collection('expenses')
+        .where('date', '>=', startDate)
+        .where('date', '<=', endDate)
+        .get();
+        
+      const expenses = snapshot.docs.map(doc => doc.data());
+      const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+      setTotalSpent(totalSpent);
+      setSpentPercentage((totalSpent / maxtotal) * 100);
+    } catch (error) {
+      console.error('Error calculating total spent:', error);
     }
   };
 
   useEffect(() => {
-    updateTimeRemaining();
-    const interval = setInterval(updateTimeRemaining, 1000);
-    return () => clearInterval(interval);
+    fetchSpendingLimit(); // Fetch spending limit and calculate the total spent when the component mounts
   }, []);
 
+  // Timer countdown logic
   useEffect(() => {
-    const fetchSpendingLimit = async () => {
-      const currentPeriod = await getCurrentSpendingLimitPeriod(realm);
-      if (currentPeriod) {
-        setMaxtotal(currentPeriod.limit);
-      }
-    };
+    if (startDate && endDate) {
+      const interval = setInterval(() => {
+        const currentTime = new Date().getTime();
+        const timeRemaining = Math.max(0, endDate.getTime() - currentTime); // Prevent negative values
+        setRemainingTime(Math.floor(timeRemaining / 1000)); // Convert milliseconds to seconds
 
-    fetchSpendingLimit();
-  }, []);
+        if (timeRemaining <= 0) {
+          clearInterval(interval); // Stop the interval when the time is up
+        }
+      }, 1000); // Update every second
 
-  const handleSmsReceived = (sms: string) => setSmsText(sms);
-  const handleAmountExtracted = (amount: string) => setExtractedAmount(amount);
+      // Cleanup interval on component unmount
+      return () => clearInterval(interval);
+    }
+  }, [startDate, endDate]);
 
+  const handleSmsReceived = (sms: string) => {
+    console.log('SMS Received:', sms);  // Log the SMS content for debugging
+    setSmsText(sms);  // Store the received SMS text
+  };
+
+  const handleAmountExtracted = (amount: string) => {
+    console.log('Extracted Amount:', amount);  // Log the extracted amount for debugging
+    setExtractedAmount(amount);  // Store the extracted amount
+
+    // Update total spent with the extracted amount
+    setTotalSpent((prevTotal) => prevTotal + parseFloat(amount));
+  };
+
+  // Handle the process of adding a new image and updating total spent
   const handleAddPress = () => {
     pickAndProcessImage(
       setImageUri,
-      amt => setTotalSpent(amt ?? 0),
-      () => { },
-      () => { },
-      realm
+      (amt: number | null) => {
+        if (amt !== null) {
+          setTotalSpent(prevTotal => parseFloat((prevTotal + amt).toFixed(2)));
+        }
+      },
+      () => {},
+      () => {}
     );
   };
 
-  const handleLimitSet = async (newLimit: number) => {
-    const currentPeriod = await getCurrentSpendingLimitPeriod(realm);
-    if (currentPeriod) {
-      await updateSpendingLimitPeriod(realm, currentPeriod.startDate, currentPeriod.endDate, newLimit);
+  const handleLimitSet = async ({ limit: newLimit, days, hours }: { limit: number; days: number; hours: number }) => {
+    try {
+      const start = new Date(); // Set the start date to the current date
+      const end = new Date(start.getTime() + (days * 24 * 60 * 60 * 1000) + (hours * 60 * 60 * 1000)); // Calculate end date by adding days and hours
+
+      await firestore().collection('spendingLimits').doc('currentLimit').set({
+        limit: newLimit,
+        startDate: firestore.Timestamp.fromDate(start), // Set the start date
+        endDate: firestore.Timestamp.fromDate(end), // Set the end date based on user input
+      });
+
+      setMaxtotal(newLimit);
+      fetchSpendingLimit();
+    } catch (error) {
+      console.error('Error setting spending limit:', error);
     }
-    setMaxtotal(newLimit);
-    updateTimeRemaining();
   };
 
   return (
-    <SafeAreaProvider>
-      <CustomSafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" />
+    <SafeAreaView>
+    <ScrollView contentContainerStyle={styles.scrollContent}>
+      <StatusBar barStyle="light-content" />
+      <Header />
+      <CircularProgress percentage={spentPercentage} totalSpent={totalSpent} maxtotal={maxtotal} />
+      <View style={styles.row}>
+        <TimeRemainingHeader remainingTime={remainingTime} totalDuration={totalDuration} />
+        <AddLimitModal onLimitSet={handleLimitSet} />
+      </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Header />
-          <CircularProgress percentage={spentPercentage} totalSpent={totalSpent} maxtotal={maxtotal} />
-          <View style={styles.row}>
-            <TimeRemainingHeader remainingTime={remainingTime} totalDuration={totalDuration} />
-            <AddLimitModal onLimitSet={handleLimitSet} />
-          </View>
+      {/* Pass categories data to CategoryListContainer */}
+      <CategoryListContainer categories={categories} />
 
-          <CategoryListContainer />
+      <View style={styles.smsContainer}>
+        <Text style={styles.smsText}>Received SMS: {smsText}</Text>
+        <Text style={styles.smsText}>
+          Extracted Amount: {extractedAmount ? extractedAmount : 'No amount detected'}
+        </Text>
+      </View>
 
-          <View style={styles.smsContainer}>
-            <Text style={styles.smsText}>Received SMS: {smsText}</Text>
-            <Text style={styles.smsText}>
-              Extracted Amount: {extractedAmount ? extractedAmount : 'No amount detected'}
-            </Text>
-          </View>
-        </ScrollView>
+      <SmsParser
+        onSmsReceived={handleSmsReceived}
+        onAmountExtracted={handleAmountExtracted}
+        setTotalSpent={setTotalSpent} // Pass setTotalSpent to SmsParser
+      />
 
-        <SmsParser onSmsReceived={handleSmsReceived} onAmountExtracted={handleAmountExtracted} />
-        <BottomTabs onAddPress={handleAddPress} />
-      </CustomSafeAreaView>
-    </SafeAreaProvider>
+      
+    </ScrollView>
+    <BottomTabs onAddPress={handleAddPress} />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
   scrollContent: {
     paddingBottom: 20,
+    backgroundColor: COLORS.background,
   },
   smsContainer: {
     marginTop: 30,
