@@ -19,7 +19,7 @@ const AnalyticsScreen = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth()); // Default to current month
   const [totalSpent, setTotalSpent] = useState<number>(0); // State to hold totalSpent
   
-  // Calculate the totalSpent for the current month (this should only happen once on initial load)
+  // Fetch the totalSpent for the selected month (this should only happen once on initial load)
   useEffect(() => {
     const fetchTotalSpent = async () => {
       try {
@@ -30,14 +30,14 @@ const AnalyticsScreen = () => {
 
         const expenses = snapshot.docs.map(doc => doc.data());
         const totalSpentValue = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-        setTotalSpent(totalSpentValue); // Set totalSpent value for the current month
+        setTotalSpent(totalSpentValue); // Set totalSpent value
       } catch (error) {
         console.error('Error fetching totalSpent:', error);
       }
     };
 
     fetchTotalSpent();
-  }, []); // Only run this effect once when the component mounts
+  }, [selectedMonth]); // Re-fetch when selectedMonth changes
 
   // Fetch category data from Firestore
   useEffect(() => {
@@ -51,14 +51,14 @@ const AnalyticsScreen = () => {
 
   // Handle month selection from the MonthSelector
   const handleMonthSelect = (month: number) => {
-    setSelectedMonth(month); // Update the selected month, but don't recalculate totalSpent
+    setSelectedMonth(month); // Update the selected month
   };
 
   return ( 
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={{ backgroundColor: '#FAFAFA' }}> 
         <AnalyticsHeader /> 
-        <MonthSelector onMonthSelect={handleMonthSelect} /> 
+        <MonthSelector selectedMonth={selectedMonth} onMonthSelect={handleMonthSelect} /> 
         <IncomeOutcomeChart selectedMonth={selectedMonth} /> {/* Pass selectedMonth to IncomeOutcomeChart */}
         {/* Pass both selectedMonth and totalSpent to MonthlyBudgetCard */}
         <MonthlyBudgetCard selectedMonth={selectedMonth} totalSpent={totalSpent} /> 

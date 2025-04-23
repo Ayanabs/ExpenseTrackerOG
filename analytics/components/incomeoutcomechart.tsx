@@ -71,8 +71,7 @@ const IncomeOutcomeChart = ({ selectedMonth }: { selectedMonth: number }) => {
           color: processColor('rgb(220, 53, 69)'), // Red for selected month's expenses
           lineWidth: 3,
           drawValues: false, // Don't display values on the line points
-          drawCircles: true,
-          circleColor: processColor('rgb(220, 53, 69)'),
+          drawCircles: false, // Don't display circles on the data points
           drawFilled: true, // Fill the area under the curve
           fillColor: processColor('rgba(220, 53, 69, 0.3)'), // Fill color for the area
           fillAlpha: 50, // Transparency for the fill color
@@ -90,8 +89,7 @@ const IncomeOutcomeChart = ({ selectedMonth }: { selectedMonth: number }) => {
           color: processColor('rgb(34, 193, 195)'), // Teal for previous month's expenses
           lineWidth: 3,
           drawValues: false, // Don't display values on the line points
-          drawCircles: true,
-          circleColor: processColor('rgb(34, 193, 195)'),
+          drawCircles: false, // Don't display circles on the data points
           drawFilled: true, // Fill the area under the curve
           fillColor: processColor('rgba(34, 193, 195, 0.3)'), // Fill color for the area
           fillAlpha: 50, // Transparency for the fill color
@@ -109,8 +107,7 @@ const IncomeOutcomeChart = ({ selectedMonth }: { selectedMonth: number }) => {
           color: processColor(savings < 0 ? 'rgb(255, 0, 0)' : 'rgb(77, 255, 138)'), // Red for overspending, green for savings
           lineWidth: 3,
           drawValues: false, // Don't display values on the line points
-          drawCircles: true,
-          circleColor: processColor(savings < 0 ? 'rgb(255, 0, 0)' : 'rgb(77, 255, 138)'),
+          drawCircles: false, // Don't display circles on the data points
           drawFilled: true, // Fill the area under the curve
           fillColor: processColor(savings < 0 ? 'rgba(255, 0, 0, 0.3)' : 'rgba(77, 255, 138, 0.3)'), // Fill color for savings
           fillAlpha: 50, // Transparency for the fill color

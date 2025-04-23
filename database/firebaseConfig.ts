@@ -1,5 +1,6 @@
 import { getFirestore, collection, getDocs, doc, setDoc, where, addDoc, query } from 'firebase/firestore';
 import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
 
 // Initialize Firebase app
 const firebaseConfig = {
@@ -9,6 +10,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+export const auth = getAuth(app);  // Firebase Auth
 
 // Fetch spending limit
 export const fetchSpendingLimit = async () => {
@@ -44,31 +46,42 @@ export const setSpendingLimit = async (totalLimit: number, days: number, hours: 
 // Fetch expenses (filtered example)
 export const fetchExpenses = async () => {
   const expensesRef = collection(db, 'expenses');
-  const q = query(expensesRef, where('amount', '>', 50));  // Example query filtering expenses greater than 50
+  if (!auth.currentUser) {
+    console.error('No authenticated user found.');
+    return [];  // Return an empty array if no user is authenticated
+  }
+  
+  const q = query(expensesRef, where('userId', '==', auth.currentUser.uid));  // Filter expenses by userId
 
   try {
     const querySnapshot = await getDocs(q);
     const expenses = querySnapshot.docs.map(doc => ({
-      id: doc.id, // Fetch the Firestore document ID
-      ...doc.data(), // Fetch the rest of the document data
+      id: doc.id,  // Fetch the Firestore document ID
+      ...doc.data(),  // Fetch the rest of the document data
     }));
 
     console.log('Fetched Expenses:', expenses);
-    return expenses; // Return the list of expenses
+    return expenses;  // Return the list of expenses
   } catch (error) {
     console.error('Error fetching expenses:', error);
-    return [];
+    return [];  // Return an empty array if there is an error
   }
 };
 
 // Add expense
 export const addExpense = async (amount: number, category: string) => {
+  if (!auth.currentUser) {
+    console.error('No authenticated user found.');
+    return;  // Don't proceed if no user is authenticated
+  }
+
   try {
     const docRef = await addDoc(collection(db, 'expenses'), {
       amount: amount,
       category: category,
-      date: new Date().toISOString(), // Use ISO format for consistency
-      source: 'OCR Receipt', // Assuming source is always 'OCR Receipt'
+      date: new Date().toISOString(),  // Use ISO format for consistency
+      source: 'OCR Receipt',  // Assuming source is always 'OCR Receipt'
+      userId: auth.currentUser.uid,  // Associate expense with authenticated user
     });
     console.log('Document written with ID: ', docRef.id);
   } catch (e) {

@@ -12,6 +12,8 @@ import AddLimitModal from './components/setgoal';
 import BottomTabs from './components/bottomtabs'; 
 import firestore from '@react-native-firebase/firestore';
 import { getGroupedExpensesByCategory } from './components/categorygroupexpense';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { COLORS } from '../theme';
 
 
 export default function Homepage() {
@@ -145,6 +147,7 @@ export default function Homepage() {
   };
 
   return (
+    <SafeAreaView>
     <ScrollView contentContainerStyle={styles.scrollContent}>
       <StatusBar barStyle="light-content" />
       <Header />
@@ -170,14 +173,17 @@ export default function Homepage() {
         setTotalSpent={setTotalSpent} // Pass setTotalSpent to SmsParser
       />
 
-      <BottomTabs onAddPress={handleAddPress} />
+      
     </ScrollView>
+    <BottomTabs onAddPress={handleAddPress} />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 20,
+    backgroundColor: COLORS.background,
   },
   smsContainer: {
     marginTop: 30,

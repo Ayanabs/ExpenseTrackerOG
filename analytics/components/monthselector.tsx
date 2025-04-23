@@ -1,14 +1,10 @@
-// MonthSelector component
-import React, { useState } from 'react'; 
+import React from 'react'; 
 import { ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native'; 
 import { COLORS } from '../../theme'; 
 
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']; 
 
-const MonthSelector = ({ onMonthSelect }: { onMonthSelect: (month: number) => void }) => {
-  const currentMonth = new Date().getMonth();  // Get the current month (0-11)
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth);  // Default to the current month
-
+const MonthSelector = ({ selectedMonth, onMonthSelect }: { selectedMonth: number, onMonthSelect: (month: number) => void }) => {
   return ( 
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.container}> 
       {months.map((month, index) => ( 
@@ -16,7 +12,6 @@ const MonthSelector = ({ onMonthSelect }: { onMonthSelect: (month: number) => vo
           key={index} 
           style={[styles.chip, index === selectedMonth && styles.activeChip]} 
           onPress={() => {
-            setSelectedMonth(index);  // Update the selected month when clicked
             onMonthSelect(index); // Pass selected month to parent
           }}
         >
@@ -53,4 +48,4 @@ const styles = StyleSheet.create({
   }, 
 }); 
 
-export default MonthSelector;
+export default MonthSelector; 

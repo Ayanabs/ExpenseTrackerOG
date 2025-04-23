@@ -1,8 +1,10 @@
-import React from 'react'; 
+import React, { useState } from 'react'; 
 import { View, TextInput, StyleSheet } from 'react-native'; 
  
 
 const ProfileFields = () => { 
+  const [email, setEmail] = useState('');
+
   return ( 
     <View> 
       {['Name', 'Email', 'Contact'].map((label, i) => ( 
@@ -11,6 +13,8 @@ const ProfileFields = () => {
           placeholder={label} 
           placeholderTextColor="#AAA" 
           style={styles.input} 
+          value={label === "Email" ? email : ''}  // Bind email here
+          onChangeText={text => { if (label === "Email") setEmail(text) }} // Update email state
         /> 
       ))} 
     </View> 
