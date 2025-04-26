@@ -1,67 +1,80 @@
-import { getFirestore, collection, getDocs, doc, setDoc, where, addDoc, query } from 'firebase/firestore';
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { auth, firestore } from '../database/firebaseinit';
 
-// Initialize Firebase app
-const firebaseConfig = {
-  apiKey: "AIzaSyB9fJLiTaJtZ2tn2fCGvuuKI-SXqGSiUbY",
-  projectId: "expensetracker-e1",
-};
-
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const auth = getAuth(app);  // Firebase Auth
-
-// Fetch spending limit
+// Fetch spending limit for the current user
 export const fetchSpendingLimit = async () => {
   try {
-    const spendingLimitsRef = collection(db, 'spendingLimits');
-    const snapshot = await getDocs(spendingLimitsRef);
-    const limitData = snapshot.docs.map(doc => doc.data());
-    return limitData[0]?.limit || 0; // Default to 0 if no data found
+    const currentUser = auth().currentUser;
+
+    if (!currentUser) {
+      console.log('No authenticated user found, using default spending limit');
+      // Return default limit for non-authenticated users
+      return 0;
+    }
+
+    const spendingLimitRef = firestore().doc(`spendingLimits/${currentUser.uid}`);
+    const snapshot = await spendingLimitRef.get();
+
+    if (snapshot.exists) {
+      const limitData = snapshot.data();
+      return limitData?.limit || 0;
+    } else {
+      console.log('No spending limit found for this user');
+      return 0;
+    }
   } catch (error) {
     console.error('Error fetching spending limit from Firestore:', error);
     return 0;
   }
 };
 
-// Set spending limit
+// Set spending limit for the current user
 export const setSpendingLimit = async (totalLimit: number, days: number, hours: number) => {
-  const startDate = new Date().toISOString(); // Using ISO format for consistency
+  const startDate = new Date().toISOString();
   const endDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000 + hours * 60 * 60 * 1000).toISOString();
 
   try {
-    const spendingLimitDocRef = doc(db, 'spendingLimits', 'currentLimit');
-    await setDoc(spendingLimitDocRef, {
+    const currentUser = auth().currentUser;
+
+    if (!currentUser) {
+      console.error('Cannot set limit: No authenticated user found');
+      return false;
+    }
+
+    const spendingLimitDocRef = firestore().doc(`spendingLimits/${currentUser.uid}`);
+    await spendingLimitDocRef.set({
       limit: totalLimit,
       startDate: startDate,
       endDate: endDate,
+      userId: currentUser.uid, // Explicitly store the userId for extra security
     });
-    console.log('Limit set successfully in Firestore');
+
+    console.log('Limit set successfully in Firestore for user:', currentUser.uid);
+    return true;
   } catch (error) {
     console.error('Error setting limit in Firestore:', error);
+    return false;
   }
 };
 
-// Fetch expenses (filtered example)
+// Fetch expenses (filtered by userId)
 export const fetchExpenses = async () => {
-  const expensesRef = collection(db, 'expenses');
-  if (!auth.currentUser) {
-    console.error('No authenticated user found.');
-    return [];  // Return an empty array if no user is authenticated
-  }
-  
-  const q = query(expensesRef, where('userId', '==', auth.currentUser.uid));  // Filter expenses by userId
-
   try {
-    const querySnapshot = await getDocs(q);
+    const currentUser = auth().currentUser;
+    if (!currentUser) {
+      console.error('No authenticated user found.');
+      return [];  // Return an empty array if no user is authenticated
+    }
+    
+    const expensesRef = firestore().collection('expenses');
+    const querySnapshot = await expensesRef.where('userId', '==', currentUser.uid).get();
+    
     const expenses = querySnapshot.docs.map(doc => ({
-      id: doc.id,  // Fetch the Firestore document ID
-      ...doc.data(),  // Fetch the rest of the document data
+      id: doc.id,
+      ...doc.data(),
     }));
 
     console.log('Fetched Expenses:', expenses);
-    return expenses;  // Return the list of expenses
+    return expenses;
   } catch (error) {
     console.error('Error fetching expenses:', error);
     return [];  // Return an empty array if there is an error
@@ -70,21 +83,24 @@ export const fetchExpenses = async () => {
 
 // Add expense
 export const addExpense = async (amount: number, category: string) => {
-  if (!auth.currentUser) {
-    console.error('No authenticated user found.');
-    return;  // Don't proceed if no user is authenticated
-  }
-
   try {
-    const docRef = await addDoc(collection(db, 'expenses'), {
+    const currentUser = auth().currentUser;
+    if (!currentUser) {
+      console.error('No authenticated user found.');
+      return;  // Don't proceed if no user is authenticated
+    }
+
+    const docRef = await firestore().collection('expenses').add({
       amount: amount,
       category: category,
       date: new Date().toISOString(),  // Use ISO format for consistency
       source: 'OCR Receipt',  // Assuming source is always 'OCR Receipt'
-      userId: auth.currentUser.uid,  // Associate expense with authenticated user
+      userId: currentUser.uid,  // Associate expense with authenticated user
     });
     console.log('Document written with ID: ', docRef.id);
+    return docRef.id;
   } catch (e) {
     console.error('Error adding expense: ', e);
+    return null;
   }
 };

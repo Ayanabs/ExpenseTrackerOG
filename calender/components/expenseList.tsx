@@ -1,13 +1,11 @@
 import React from 'react';
 import { View, FlatList, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
-// Define the props for the component, where expenses are of type any[]
 type Props = {
   expenses: any[]; // Expenses will be of type any[]
   onEdit: (expense: any) => void; // Accepting a general expense object
   onDelete: (expense: any) => void; // Accepting a general expense object
   onClose: () => void; // Add the onClose property to the Props type
-  
 };
 
 const ExpenseList: React.FC<Props> = ({ expenses, onEdit, onDelete }) => {

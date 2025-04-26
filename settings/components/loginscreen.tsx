@@ -1,14 +1,61 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { loginUser, registerUser } from '../../database/firebaseAuth'; // Import authentication logic
-import LoginModal from './loginmodal';
-import RegisterModal from './registermodal';
+import { auth, firestore } from '../../database/firebaseinit'; // Import initialized Firebase
+import LoginModal from './loginmodal'; // Make sure this path is correct
+import RegisterModal from './registermodal'; // Make sure this path is correct
 import SettingsHeader from './settingsheader';
+
+// In LoginScreen component
+const migrateTemporaryData = async (userId: string) => {
+  try {
+    // Get temporary spending limit
+    const tempLimitDoc = await firestore().collection('spendingLimits').doc('temporaryUser').get();
+    
+    // If temporary data exists, migrate it to the user account
+    if (tempLimitDoc.exists) {
+      const tempLimitData = tempLimitDoc.data();
+      if (tempLimitData) {
+        await firestore().collection('spendingLimits').doc(userId).set(tempLimitData);
+        
+        // Update the userId field
+        await firestore().collection('spendingLimits').doc(userId).update({
+          userId: userId
+        });
+      }
+    }
+    
+    // Get temporary expenses
+    const tempExpenses = await firestore()
+      .collection('expenses')
+      .where('userId', '==', 'temporaryUser')
+      .get();
+
+    // Migrate each expense to the user account
+    const batch = firestore().batch();
+    tempExpenses.docs.forEach(doc => {
+      const newRef = firestore().collection('expenses').doc();
+      batch.set(newRef, {
+        ...doc.data(),
+        userId: userId
+      });
+    });
+
+    await batch.commit();
+
+    console.log('Temporary data migrated successfully to user account');
+  } catch (error) {
+    console.error('Error migrating temporary data:', error);
+  }
+};
 
 const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
   const [loginModalVisible, setLoginModalVisible] = useState(false);
   const [registerModalVisible, setRegisterModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Add log to debug modal visibility
+  console.log('Modal States:', { loginModalVisible, registerModalVisible });
 
   const handleLogin = async (email: string, password: string) => {
     if (!email || !password) {
@@ -18,7 +65,13 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
 
     setIsLoading(true);
     try {
-      await loginUser(email, password);  // Use the login function from firebaseAuth
+      const user = await loginUser(email, password);  // Use the login function from firebaseAuth
+      
+      if (user) {
+        // Migrate any temporary data to the user account
+        await migrateTemporaryData(user.uid);
+      }
+      
       setIsLoading(false);
       onLogin();  // After login, call onLogin callback to update app state
       return Promise.resolve();
@@ -38,7 +91,13 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
 
     setIsLoading(true);
     try {
-      await registerUser(email, password, name, phone);  // Use the register function from firebaseAuth
+      const user = await registerUser(email, password, name, phone);  // Use the register function from firebaseAuth
+      
+      if (user) {
+        // Migrate any temporary data to the user account
+        await migrateTemporaryData(user.uid);
+      }
+      
       setIsLoading(false);
       // Show success message
       Alert.alert('Success', 'Registration successful! You can now login.');
@@ -54,6 +113,16 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
     }
   };
 
+  const handleLoginPress = () => {
+    console.log('Login button pressed');
+    setLoginModalVisible(true);
+  };
+
+  const handleRegisterPress = () => {
+    console.log('Register button pressed');
+    setRegisterModalVisible(true);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.container2}>
@@ -61,7 +130,7 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
         <View style={styles.card}>
           <TouchableOpacity 
             style={styles.loginButton} 
-            onPress={() => setLoginModalVisible(true)}
+            onPress={handleLoginPress}
             disabled={isLoading}
           >
             <Text style={styles.buttonText}>Login</Text> 
@@ -69,7 +138,7 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
 
           <TouchableOpacity 
             style={styles.registerButton} 
-            onPress={() => setRegisterModalVisible(true)}
+            onPress={handleRegisterPress}
             disabled={isLoading}
           >
             <Text style={styles.registerbuttonText}>Register</Text>
@@ -77,7 +146,7 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
         </View>
       </View>
 
-      {/* Modal Components - passing the handler functions properly */}
+      {/* Render modals regardless of visibility state - to ensure they're in the component tree */}
       <LoginModal 
         visible={loginModalVisible} 
         onClose={() => setLoginModalVisible(false)} 

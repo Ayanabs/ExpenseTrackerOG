@@ -1,6 +1,5 @@
-// LoginModal.tsx
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, Button, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { Modal, View, Text, TextInput, Button, StyleSheet, ActivityIndicator } from 'react-native';
 
 interface LoginModalProps {
   visible: boolean;
@@ -13,6 +12,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose, onLogin }) =>
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Add log to debug modal visibility
+  console.log('LoginModal render - visible:', visible);
 
   const validateForm = () => {
     if (!email) {
@@ -51,7 +53,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose, onLogin }) =>
   };
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent={true}>
+    <Modal 
+      visible={visible} 
+      animationType="slide" 
+      onRequestClose={onClose} 
+      transparent={true}
+      statusBarTranslucent={true}
+    >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Login</Text>
@@ -81,12 +89,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose, onLogin }) =>
             <View style={styles.buttonContainer}>
               <Button 
                 title="Login" 
-                onPress={handleSubmit} 
+                onPress={handleSubmit}
                 color="#47248c"
               />
               <Button 
                 title="Cancel" 
-                onPress={onClose} 
+                onPress={onClose}
                 color="#666"
               />
             </View>
@@ -109,6 +117,11 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: 'white',
     borderRadius: 10,
+    elevation: 5, // For Android shadow
+    shadowColor: '#000', // For iOS shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   modalTitle: {
     fontSize: 20,

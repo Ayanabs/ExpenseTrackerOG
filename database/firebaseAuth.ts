@@ -1,96 +1,77 @@
-// firebaseAuth.ts
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { getFirestore, collection, setDoc, doc } from 'firebase/firestore';
-import { initializeApp } from 'firebase/app';
-
-// Initialize Firebase app
-const firebaseConfig = {
-  apiKey: "AIzaSyB9fJLiTaJtZ2tn2fCGvuuKI-SXqGSiUbY",
-  projectId: "expensetracker-e1",
-  // Add other config values as needed
-};
-
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+import { auth, firestore } from './firebaseinit';
+import { useEffect, useState } from 'react';
 
 // Register User
 export const registerUser = async (email: string, password: string, name: string, phone?: string) => {
-  if (!email || !password || !name) {
-    throw new Error('Email, password, and name are required');
-  }
-
-  console.log('Attempting to register with email:', email);
-
   try {
-    // Register the user in Firebase Authentication
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    // React Native Firebase handles persistence automatically
+    const userCredential = await auth().createUserWithEmailAndPassword(email, password);
     const user = userCredential.user;
 
-    // Store additional user data in Firestore, but NOT the password
-    await setDoc(doc(db, 'users', user.uid), {
+    // Store additional user data in Firestore (excluding password)
+    await firestore().collection('users').doc(user.uid).set({
       name,
       email,
-      phone: phone || '',  // Phone is optional
-      createdAt: new Date().toISOString()
+      phone: phone || '',
+      createdAt: new Date().toISOString(),
     });
 
     console.log('User registered successfully');
-    return user;  // Returning the user data
+    return user;
   } catch (error) {
-    console.error('Error registering user: ', (error as Error).message);
-    
-    // Provide more user-friendly error messages
-    if ((error as any).code === 'auth/email-already-in-use') {
-      throw new Error('This email is already registered. Please log in instead.');
-    } else if ((error as any).code === 'auth/weak-password') {
-      throw new Error('Password is too weak. Please use at least 6 characters.');
-    } else if ((error as any).code === 'auth/invalid-email') {
-      throw new Error('Invalid email address format.');
-    } else {
-      throw error; // Throw original error for other cases
-    }
+    console.error('Error registering user:', error);
+    throw error;
   }
 };
 
-// Login User
 export const loginUser = async (email: string, password: string) => {
-  if (!email || !password) {
-    throw new Error('Email and password are required');
-  }
-
-  console.log('Attempting to log in with email:', email);
-
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+    // React Native Firebase handles persistence automatically
+    const userCredential = await auth().signInWithEmailAndPassword(email, password);
 
     console.log('User logged in successfully');
-    return user;  // Returning the authenticated user
+    return userCredential.user;
   } catch (error) {
-    console.error('Error logging in: ', (error as Error).message);
-    
-    // Provide more user-friendly error messages
-    if ((error as any).code === 'auth/user-not-found' || (error as any).code === 'auth/wrong-password') {
-      throw new Error('Invalid email or password. Please try again.');
-    } else if ((error as any).code === 'auth/invalid-email') {
-      throw new Error('Invalid email address format.');
-    } else if ((error as any).code === 'auth/too-many-requests') {
-      throw new Error('Too many failed login attempts. Please try again later.');
-    } else {
-      throw error;  // Throw original error for other cases
-    }
+    console.error('Error logging in:', error);
+    throw error;
   }
 };
 
 // Logout User
 export const logoutUser = async () => {
   try {
-    await signOut(auth);  // Sign out the user
+    await auth().signOut();  // Sign out the user
     console.log('User logged out successfully');
     return true;
   } catch (error) {
-    console.error('Error logging out: ', (error as Error).message);
+    console.error('Error logging out: ', error);
     throw error;
   }
 };
+
+// Custom hook to manage authentication state
+const useAuth = () => {
+  const [user, setUser] = useState<any>(null);  // To store user state
+  const [loading, setLoading] = useState(true);  // To handle loading state
+
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = auth().onAuthStateChanged((currentUser) => {
+      if (currentUser) {
+        console.log('User is signed in:', currentUser.uid);
+        setUser(currentUser); // Store user info when logged in
+      } else {
+        console.log('User is signed out');
+        setUser(null); // Clear user state when logged out
+      }
+
+      setLoading(false); // Set loading state to false after checking auth state
+    });
+
+    return () => unsubscribe();  // Clean up the listener when the component is unmounted
+  }, []);
+
+  return { user, loading };
+};
+
+export default useAuth;

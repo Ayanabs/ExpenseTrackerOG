@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Dimensions, StyleSheet, View, Text, processColor } from 'react-native';
 import { LineChart } from 'react-native-charts-wrapper';  // Using LineChart
-import { db } from '../../database/firebaseConfig'; // Import firebase config
-import { collection, getDocs } from 'firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -16,14 +16,19 @@ const IncomeOutcomeChart = ({ selectedMonth }: { selectedMonth: number }) => {
   useEffect(() => {
     const fetchExpenses = async () => {
       try {
-        const expensesCollection = collection(db, 'expenses'); // Fetch expenses collection
-        const snapshot = await getDocs(expensesCollection); // Get all expenses
-        const expenses = snapshot.docs.map((doc) => doc.data()); // Extract data
+        const currentUser = auth().currentUser;
+        if (!currentUser) return;
+
+        const expensesCollection = firestore().collection('expenses');
+        const snapshot = await expensesCollection.where('userId', '==', currentUser.uid).get(); // Fetch expenses filtered by userId
+        const expenses = snapshot.docs.map(doc => doc.data());
+
         setExpensesData(expenses); // Set expenses data to state
       } catch (error) {
         console.error('Error fetching expenses: ', error);
       }
     };
+
     fetchExpenses();
   }, []); // Empty dependency array to run once when the component mounts
 

@@ -1,15 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { PermissionsAndroid, Alert } from 'react-native';
-import SmsListener from 'react-native-android-sms-listener'; // Ensure SMS listener is installed
-import firestore from '@react-native-firebase/firestore'; // Import Firestore for data handling
+import SmsListener from 'react-native-android-sms-listener';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';  // Import Firebase auth directly
 
 interface SmsParserProps {
   onSmsReceived: (sms: string) => void;
   onAmountExtracted: (amount: string) => void;
-  setTotalSpent?: React.Dispatch<React.SetStateAction<number>>; // Optional prop for updating total spent
+  setTotalSpent?: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted, setTotalSpent }) => {
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Request SMS permission from the user
   const requestSMSPermission = async () => {
@@ -44,64 +46,59 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
 
   // Save extracted SMS and amount into Firestore
   const saveToFirestore = async (message: string, extractedAmount: string) => {
+    if (!currentUser) {
+      console.error('No user is signed in');
+      return;
+    }
+
     try {
       const amount = parseFloat(extractedAmount);
       console.log('Amount to be saved to Firestore:', amount);
 
-      // Fetch the current spending limit period from Firestore (you can adjust this if needed)
-      const currentPeriodDoc = await firestore().collection('spendingLimits').doc('currentLimit').get();
-      if (!currentPeriodDoc.exists) {
-        console.error('No current spending period found!');
+      // Get the current spending limit period from Firestore
+      const spendingLimitDoc = await firestore().collection('spendingLimits').doc(currentUser.uid).get();
+
+      if (!spendingLimitDoc.exists) {
+        console.error('No spending limit found for this user');
         return;
       }
 
-      const currentPeriod = currentPeriodDoc.data();
-      if (!currentPeriod) {
-        console.error('No data found for the spending period!');
+      const spendingLimitData = spendingLimitDoc.data();
+      if (!spendingLimitData) {
+        console.error('No data found in the spending limit document');
         return;
       }
 
-      // Add the expense to Firestore
+      // Add the expense to Firestore with userId
       await firestore().collection('expenses').add({
-        amount,             // Amount extracted from SMS
-        source: 'SMS',      // Source is 'SMS'
-        date: firestore.Timestamp.fromDate(new Date()),  // Current date
-        category: 'SMS',    // Category is 'SMS'
-        period: currentPeriod, // Add the current spending period
+        amount,
+        source: 'SMS',
+        date: firestore.Timestamp.fromDate(new Date()),
+        category: 'SMS',
+        userId: currentUser.uid, // Add the user ID to filter expenses correctly
+        description: message.slice(0, 100), // Store the first 100 chars of the SMS as description
       });
 
-      // If total spent needs to be updated, calculate the total spent here
-      if (setTotalSpent) {
-        const totalSpentInPeriod = await calculateTotalSpentWithinPeriod(currentPeriod);
-        setTotalSpent(parseFloat(totalSpentInPeriod.toFixed(2) ?? '0.00')); // Update total spent in parent
-        console.log('Total spent after SMS expense:', totalSpentInPeriod);
-      }
+      console.log('SMS expense saved successfully to Firestore');
+
+      // No need to manually update totalSpent here as the listener in Homepage will handle it
     } catch (error) {
       console.error('Error saving SMS expense to Firestore:', error);
     }
   };
 
-  // Calculate total spent within the spending period
-  const calculateTotalSpentWithinPeriod = async (currentPeriod: any) => {
-    try {
-      // Fetch expenses within the current spending period from Firestore
-      const snapshot = await firestore().collection('expenses')
-        .where('date', '>=', currentPeriod.startDate)
-        .where('date', '<=', currentPeriod.endDate)
-        .get();
-
-      const expenses = snapshot.docs.map(doc => doc.data());
-      const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-      return totalSpent;
-    } catch (error) {
-      console.error('Error calculating total spent within the period:', error);
-      return 0;
-    }
+  // Get the current user from Firebase Auth
+  const getCurrentUser = () => {
+    const user = auth().currentUser; // Call auth() inside the component or hook
+    setCurrentUser(user);  // Store the current user in state
   };
 
   useEffect(() => {
     // Request SMS permission when the component is mounted
     requestSMSPermission();
+
+    // Fetch the current user when the component mounts
+    getCurrentUser();
 
     // Set up the SMS listener to receive incoming messages
     const subscription = SmsListener.addListener(message => {
@@ -122,7 +119,7 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
 
     // Clean up the listener when the component is unmounted
     return () => subscription.remove();
-  }, [onSmsReceived, onAmountExtracted]);
+  }, [onSmsReceived, onAmountExtracted]); // Make sure these functions are passed as props and stay consistent
 
   return null;  // Nothing to render for this component
 };

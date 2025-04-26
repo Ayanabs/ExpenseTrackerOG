@@ -1,36 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { db } from '../../database/firebaseConfig'; // Import firebase config
-import { collection, getDocs, query, where } from 'firebase/firestore'; // Firestore imports
+import { getFirestore } from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
 interface MonthlyBudgetCardProps {
-  selectedMonth: number; // Declare selectedMonth in the props type
-  totalSpent: number; // Add totalSpent as a required prop
+  selectedMonth: number;
+  totalSpent: number;
 }
 
 const MonthlyBudgetCard: React.FC<MonthlyBudgetCardProps> = ({ selectedMonth, totalSpent }) => {
   const [currentLimit, setCurrentLimit] = useState<number>(0); // Budget limit for the month
+  const [remainingBudget, setRemainingBudget] = useState<number>(0); // Remaining budget for the month
 
   // Fetch spending limit data when component mounts
   useEffect(() => {
     const fetchSpendingLimit = async () => {
       try {
-        // Fetch the spending limit for the selected month
-        const spendingLimitDoc = await getDocs(collection(db, 'spendingLimits'));
-        spendingLimitDoc.forEach((doc) => {
-          setCurrentLimit(doc.data().limit); // Assuming the limit is stored as 'limit' in the document
-        });
+        const currentUser = auth().currentUser;
+        if (!currentUser) return;
+
+        // Fetch the spending limit for the logged-in user
+        const snapshot = await getFirestore()
+          .collection('spendingLimits')
+          .where('userId', '==', currentUser.uid)  // Filter by userId
+          .get();
+
+        // If we find a document for the current user, set the spending limit
+        if (!snapshot.empty) {
+          snapshot.forEach(doc => {
+            const limitData = doc.data();
+            if (limitData) {
+              setCurrentLimit(limitData.limit);
+            }
+          });
+        }
       } catch (error) {
         console.error('Error fetching spending limit:', error);
       }
     };
 
     fetchSpendingLimit();
-  }, [selectedMonth]); // Fetch spending limit when selectedMonth changes
+  }, [selectedMonth]); // Re-fetch when selectedMonth changes
 
   // Calculate remaining budget
-  const remainingBudget = currentLimit - totalSpent;
-  const savings = remainingBudget > 0 ? remainingBudget : 0; // Assuming savings is the leftover amount
+  useEffect(() => {
+    setRemainingBudget(currentLimit - totalSpent); // Remaining budget = limit - total spent
+  }, [currentLimit, totalSpent]);
 
   // Static values for budget and max budget
   const dailyBudget = currentLimit / 30; // Assuming 30 days in a month for simplicity
@@ -47,7 +62,7 @@ const MonthlyBudgetCard: React.FC<MonthlyBudgetCardProps> = ({ selectedMonth, to
       </View>
       <Text style={styles.summary}>
         Daily budget was ~ Rs.{dailyBudget.toFixed(0)} - Rs.{(dailyBudget + 40).toFixed(0)}, Saved{' '}
-        <Text style={{ color: '#5CB85C' }}>Rs.{savings}</Text>
+        <Text style={{ color: '#5CB85C' }}>Rs.{remainingBudget > 0 ? remainingBudget : 0}</Text>
       </Text>
     </View>
   );
