@@ -61,7 +61,7 @@ const AnalyticsScreen = () => {
         <MonthSelector selectedMonth={selectedMonth} onMonthSelect={handleMonthSelect} /> 
         <IncomeOutcomeChart selectedMonth={selectedMonth} /> {/* Pass selectedMonth to IncomeOutcomeChart */}
         {/* Pass both selectedMonth and totalSpent to MonthlyBudgetCard */}
-        <MonthlyBudgetCard selectedMonth={selectedMonth} totalSpent={totalSpent} /> 
+        <MonthlyBudgetCard selectedMonth={selectedMonth} /> 
         <CategoriesContainer categories={categories} isLoading={false} />
       </ScrollView> 
     </SafeAreaView>

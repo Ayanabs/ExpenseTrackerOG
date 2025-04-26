@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   View, ScrollView, StatusBar, Text, StyleSheet, ActivityIndicator
 } from 'react-native';
+import { AppContext } from '../App'; // Import the context
 
 import { pickAndProcessImage } from '../ocr';
 import { Category } from './components/category';
@@ -20,6 +21,8 @@ import { COLORS } from '../theme';
 import { fetchSpendingLimit } from '../database/firebaseConfig';
 
 export default function Homepage() {
+  const { isRefreshing } = useContext(AppContext);
+  
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [maxtotal, setMaxtotal] = useState(0);
@@ -38,17 +41,38 @@ export default function Homepage() {
   // Authentication state listener
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged(user => {
+      // Reset all state values when auth state changes
+      resetAllState();
+      
       if (user) {
         console.log("User is signed in:", user.uid);
         fetchUserData(user.uid);
       } else {
         console.log("User is signed out");
-        // Handle signed-out state
+        setIsLoading(false);
+        setIsCategoriesLoading(false);
       }
     });
   
     return subscriber; // Unsubscribe on unmount
   }, []);
+
+  // Reset all state values
+  const resetAllState = () => {
+    setImageUri(null);
+    setCategories([]);
+    setMaxtotal(0);
+    setSpentPercentage(0);
+    setSmsText('');
+    setExtractedAmount(null);
+    setRemainingTime(0);
+    setTotalDuration(0);
+    setStartDate(null);
+    setEndDate(null);
+    setTotalSpent(0);
+    setIsLoading(true);
+    setIsCategoriesLoading(true);
+  };
 
   // Fetch user data including spending limit and categories
   const fetchUserData = async (userId: string) => {
@@ -109,8 +133,10 @@ export default function Homepage() {
           }
         } else {
           // Default values if no document exists
-         
-         
+          setMaxtotal(0);
+          setStartDate(null);
+          setEndDate(null);
+          setTotalDuration(0);
         }
       },
       (error) => {
@@ -227,7 +253,12 @@ export default function Homepage() {
   };
 
   if (isLoading) {
-  
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#8A4FFF" />
+        <Text style={styles.loadingText}>Loading data...</Text>
+      </View>
+    );
   }
 
   return (
@@ -244,7 +275,7 @@ export default function Homepage() {
         {/* Categories section */}
         <CategoriesContainer 
           categories={categories} 
-          isLoading={isCategoriesLoading} 
+          isLoading={isCategoriesLoading || isRefreshing} 
         />
 
         {/* SMS Parser section */}

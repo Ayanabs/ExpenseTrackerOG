@@ -1,19 +1,19 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import auth from '@react-native-firebase/auth';
+import { AppContext } from '../../App'; // Import the context
 
-// Updated to handle Firebase logout
+// Updated to handle Firebase logout with proper state management
 const LogoutButton = ({ onLogout }: { onLogout: () => void }) => {
+  const { refreshData } = useContext(AppContext);
+
   const handleLogout = async () => {
     try {
-      // Sign out from Firebase Authentication
-      await auth().signOut();
+      // Call the refreshData function from context first
+      refreshData();
       
-      // After successful signout, call the onLogout prop callback
+      // Then execute the provided onLogout function
       onLogout();
-      
-      console.log('User signed out successfully');
     } catch (error) {
       console.error('Error signing out:', error);
       Alert.alert('Logout Failed', 'There was a problem signing out. Please try again.');

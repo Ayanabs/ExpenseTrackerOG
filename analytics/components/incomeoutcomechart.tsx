@@ -1,171 +1,126 @@
 import React, { useState, useEffect } from 'react';
 import { Dimensions, StyleSheet, View, Text, processColor } from 'react-native';
-import { LineChart } from 'react-native-charts-wrapper';  // Using LineChart
+import { BarChart } from 'react-native-charts-wrapper';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
 const screenWidth = Dimensions.get('window').width;
 
 const IncomeOutcomeChart = ({ selectedMonth }: { selectedMonth: number }) => {
-  const [expensesData, setExpensesData] = useState<any[]>([]); // State to hold expenses data
-  const [previousMonthExpenses, setPreviousMonthExpenses] = useState<number>(0); // Store previous month's expenses
-  const [selectedMonthExpenses, setSelectedMonthExpenses] = useState<number>(0); // Store selected month's expenses
-  const [savings, setSavings] = useState<number>(0); // Store savings (difference in expenses)
+  const [expensesData, setExpensesData] = useState<any[]>([]);
+  const [previousMonthExpenses, setPreviousMonthExpenses] = useState<number>(0);
+  const [selectedMonthExpenses, setSelectedMonthExpenses] = useState<number>(0);
+  const [savings, setSavings] = useState<number>(0);
 
-  // Fetch expenses data from Firestore
   useEffect(() => {
     const fetchExpenses = async () => {
       try {
         const currentUser = auth().currentUser;
         if (!currentUser) return;
 
-        const expensesCollection = firestore().collection('expenses');
-        const snapshot = await expensesCollection.where('userId', '==', currentUser.uid).get(); // Fetch expenses filtered by userId
-        const expenses = snapshot.docs.map(doc => doc.data());
+        const snapshot = await firestore()
+          .collection('expenses')
+          .where('userId', '==', currentUser.uid)
+          .get();
 
-        setExpensesData(expenses); // Set expenses data to state
+        const expenses = snapshot.docs.map(doc => doc.data());
+        setExpensesData(expenses);
       } catch (error) {
         console.error('Error fetching expenses: ', error);
       }
     };
 
     fetchExpenses();
-  }, []); // Empty dependency array to run once when the component mounts
+  }, []);
 
-  // Filter expenses by month
   const getMonthExpenses = (month: number) => {
     return expensesData.filter((expense) => new Date(expense.date.seconds * 1000).getMonth() === month);
   };
 
-  // Calculate total expenses for a given month
   const calculateTotalExpenses = (month: number) => {
     const monthExpenses = getMonthExpenses(month);
     return monthExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   };
 
-  // Update expenses for selected and previous months
   useEffect(() => {
-    // Calculate expenses for the selected month
-    const selectedMonthTotal = calculateTotalExpenses(selectedMonth);
-    setSelectedMonthExpenses(selectedMonthTotal);
+    const selectedTotal = calculateTotalExpenses(selectedMonth);
+    const previousMonth = (selectedMonth - 1 + 12) % 12;
+    const previousTotal = calculateTotalExpenses(previousMonth);
+    const calculatedSavings = previousTotal - selectedTotal;
 
-    // Calculate expenses for the previous month
-    const previousMonth = (selectedMonth - 1 + 12) % 12; // Get previous month's index
-    const previousMonthTotal = calculateTotalExpenses(previousMonth);
-    setPreviousMonthExpenses(previousMonthTotal);
+    setSelectedMonthExpenses(selectedTotal);
+    setPreviousMonthExpenses(previousTotal);
+    setSavings(calculatedSavings);
+  }, [selectedMonth, expensesData]);
 
-    // Calculate savings (difference in expenses)
-    const savings = previousMonthTotal - selectedMonthTotal;
-    setSavings(savings); // Savings is the reduction in expenses
-  }, [selectedMonth, expensesData]); // Re-run when selectedMonth or expensesData changes
-
-  // Prepare the data for the chart
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-  const data = {
+  const barData = {
     dataSets: [
       {
         values: [
-          {
-            x: selectedMonthExpenses, // X-axis will show the expense amounts for selected month
-            y: selectedMonth, // Y-axis will represent selected month's expenses
-          },
+          { y: previousMonthExpenses },
+          { y: selectedMonthExpenses },
         ],
-        label: 'Selected Month Expenses',
+        label: 'Monthly Expenses',
         config: {
-          color: processColor('rgb(220, 53, 69)'), // Red for selected month's expenses
-          lineWidth: 3,
-          drawValues: false, // Don't display values on the line points
-          drawCircles: false, // Don't display circles on the data points
-          drawFilled: true, // Fill the area under the curve
-          fillColor: processColor('rgba(220, 53, 69, 0.3)'), // Fill color for the area
-          fillAlpha: 50, // Transparency for the fill color
-        },
-      },
-      {
-        values: [
-          {
-            x: previousMonthExpenses, // X-axis will show the expense amounts for previous month
-            y: (selectedMonth - 1 + 12) % 12, // Y-axis will represent previous month's expenses
-          },
-        ],
-        label: 'Previous Month Expenses',
-        config: {
-          color: processColor('rgb(34, 193, 195)'), // Teal for previous month's expenses
-          lineWidth: 3,
-          drawValues: false, // Don't display values on the line points
-          drawCircles: false, // Don't display circles on the data points
-          drawFilled: true, // Fill the area under the curve
-          fillColor: processColor('rgba(34, 193, 195, 0.3)'), // Fill color for the area
-          fillAlpha: 50, // Transparency for the fill color
-        },
-      },
-      {
-        values: [
-          {
-            x: savings, // Savings will be the difference between selected and previous month's expenses
-            y: selectedMonth, // Y-axis will represent savings (on the same Y-axis as expenses)
-          },
-        ],
-        label: 'Savings',
-        config: {
-          color: processColor(savings < 0 ? 'rgb(255, 0, 0)' : 'rgb(77, 255, 138)'), // Red for overspending, green for savings
-          lineWidth: 3,
-          drawValues: false, // Don't display values on the line points
-          drawCircles: false, // Don't display circles on the data points
-          drawFilled: true, // Fill the area under the curve
-          fillColor: processColor(savings < 0 ? 'rgba(255, 0, 0, 0.3)' : 'rgba(77, 255, 138, 0.3)'), // Fill color for savings
-          fillAlpha: 50, // Transparency for the fill color
+          colors: [
+            processColor('#22C1C3'), // Previous month
+            processColor(savings >= 0 ? '#4DFF8A' : '#FF4D4D') // Green = savings, Red = overspent
+          ],
+          valueTextSize: 12,
+          valueTextColor: processColor('#333'),
         },
       },
     ],
+    config: {
+      barWidth: 0.4,
+    },
   };
 
-  // Y-axis dynamically scaled based on the maximum total expense
+  const xAxis = {
+    valueFormatter: ['Previous', 'Selected'],
+    granularityEnabled: true,
+    granularity: 1,
+    position: 'BOTTOM' as const,
+    drawLabels: true,
+    labelCount: 2,
+    axisMinimum: -0.5,
+    axisMaximum: 1.5,
+    centerAxisLabels: true,
+  };
+
   const yAxis = {
     left: {
-      axisMaximum: months.length,  // Set to the number of months (12)
       axisMinimum: 0,
-      labelCount: 6,
     },
     right: {
-      axisMaximum: months.length,
-      axisMinimum: 0,
-      labelCount: 6,
+      enabled: false,
     },
-  };
-
-  // X-axis for expenses amounts
-  const xAxis = {
-    position: 'BOTTOM' as 'BOTTOM',
-    granularityEnabled: true,
-    granularity: 1000, // You can change the granularity based on the range of expense amounts
-    axisMaximum: Math.max(...expensesData.map((exp) => exp.amount)) + 5000,
-    axisMinimum: 0,
-    drawLabels: true,
-    valueFormatter: expensesData.map((expense) => `Rs. ${expense.amount}`), // Format X-axis as currency (expense amount)
   };
 
   return (
     <View style={styles.container}>
-      <LineChart
+      <BarChart
         style={styles.chart}
-        data={data}
+        data={barData}
         xAxis={xAxis}
         yAxis={yAxis}
-        chartDescription={{ text: '' }}
         legend={{
           enabled: true,
-          horizontalAlignment: 'CENTER',
+          textSize: 14,
+          form: 'SQUARE',
           verticalAlignment: 'BOTTOM',
-          orientation: 'HORIZONTAL',
+          horizontalAlignment: 'CENTER',
         }}
-        drawBorders={false}
+        chartDescription={{ text: '' }}
+        drawValueAboveBar={true}
+        drawBarShadow={false}
       />
-      {/* Display total expenses */}
+
       <View style={styles.totalContainer}>
-        <Text style={styles.totalText}>Total Expenses: Rs. {selectedMonthExpenses}</Text>
-        <Text style={styles.totalText}>Savings (Current Month vs Previous): Rs. {savings}</Text>
+        <Text style={styles.totalText}>Selected Month Expenses: Rs. {selectedMonthExpenses}</Text>
+        <Text style={[styles.totalText, { color: savings >= 0 ? 'green' : 'red' }]}>
+          {savings >= 0 ? `Savings` : `Loss`}: Rs. {Math.abs(savings)}
+        </Text>
       </View>
     </View>
   );
@@ -177,7 +132,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   chart: {
-    height: 220,
+    height: 250,
     width: screenWidth - 32,
     borderRadius: 16,
   },
@@ -188,7 +143,6 @@ const styles = StyleSheet.create({
   totalText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
     marginVertical: 4,
   },
 });

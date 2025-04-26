@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
-import { loginUser, registerUser } from '../../database/firebaseAuth'; // Import authentication logic
-import { auth, firestore } from '../../database/firebaseinit'; // Import initialized Firebase
-import LoginModal from './loginmodal'; // Make sure this path is correct
-import RegisterModal from './registermodal'; // Make sure this path is correct
+import { loginUser, registerUser } from '../../database/firebaseAuth';
+import { firestore } from '../../database/firebaseinit';
+import { AppContext } from '../../App'; // Import the context
+import LoginModal from './loginmodal';
+import RegisterModal from './registermodal';
 import SettingsHeader from './settingsheader';
 
-// In LoginScreen component
+// Improved migration function
 const migrateTemporaryData = async (userId: string) => {
   try {
     // Get temporary spending limit
@@ -16,10 +17,8 @@ const migrateTemporaryData = async (userId: string) => {
     if (tempLimitDoc.exists) {
       const tempLimitData = tempLimitDoc.data();
       if (tempLimitData) {
-        await firestore().collection('spendingLimits').doc(userId).set(tempLimitData);
-        
-        // Update the userId field
-        await firestore().collection('spendingLimits').doc(userId).update({
+        await firestore().collection('spendingLimits').doc(userId).set({
+          ...tempLimitData,
           userId: userId
         });
       }
@@ -31,17 +30,19 @@ const migrateTemporaryData = async (userId: string) => {
       .where('userId', '==', 'temporaryUser')
       .get();
 
-    // Migrate each expense to the user account
-    const batch = firestore().batch();
-    tempExpenses.docs.forEach(doc => {
-      const newRef = firestore().collection('expenses').doc();
-      batch.set(newRef, {
-        ...doc.data(),
-        userId: userId
+    // Migrate each expense to the user account if there are any
+    if (!tempExpenses.empty) {
+      const batch = firestore().batch();
+      tempExpenses.docs.forEach(doc => {
+        const newRef = firestore().collection('expenses').doc();
+        batch.set(newRef, {
+          ...doc.data(),
+          userId: userId
+        });
       });
-    });
-
-    await batch.commit();
+      
+      await batch.commit();
+    }
 
     console.log('Temporary data migrated successfully to user account');
   } catch (error) {
@@ -49,7 +50,8 @@ const migrateTemporaryData = async (userId: string) => {
   }
 };
 
-const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
+const LoginScreen = ({ navigation, onLogin }: { navigation: any, onLogin: () => void }) => {
+  const { refreshData } = useContext(AppContext);
   const [loginModalVisible, setLoginModalVisible] = useState(false);
   const [registerModalVisible, setRegisterModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,15 +67,31 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
 
     setIsLoading(true);
     try {
-      const user = await loginUser(email, password);  // Use the login function from firebaseAuth
+      const user = await loginUser(email, password);
       
       if (user) {
         // Migrate any temporary data to the user account
         await migrateTemporaryData(user.uid);
+        
+        // Call refreshData to update app state
+        refreshData();
+        
+        // Brief timeout to ensure data is loaded
+        setTimeout(() => {
+          setIsLoading(false);
+          setLoginModalVisible(false);
+          
+          // Navigate to Homepage
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Homepage' }],
+          });
+          
+          // Then call onLogin to update app state
+          onLogin();
+        }, 500);
       }
       
-      setIsLoading(false);
-      onLogin();  // After login, call onLogin callback to update app state
       return Promise.resolve();
     } catch (error) {
       setIsLoading(false);
@@ -83,6 +101,7 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
     }
   };
 
+  // Rest of the component remains the same
   const handleRegister = async (email: string, password: string, name: string, phone?: string) => {
     if (!email || !password || !name) {
       Alert.alert('Error', 'Name, email and password are required');
@@ -91,7 +110,7 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
 
     setIsLoading(true);
     try {
-      const user = await registerUser(email, password, name, phone);  // Use the register function from firebaseAuth
+      const user = await registerUser(email, password, name, phone);
       
       if (user) {
         // Migrate any temporary data to the user account
