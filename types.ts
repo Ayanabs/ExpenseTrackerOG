@@ -5,4 +5,5 @@ export type RootStackParamList = {
   Settings: undefined; // Type for Settings screen
   MonthTab: undefined;
   Login: { onLogin: () => void }; // Type for Login screen
+  Alerts: undefined; // Type for Alerts screen
 };

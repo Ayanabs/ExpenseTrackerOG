@@ -19,6 +19,7 @@ import { fetchCategoriesWithExpenses } from './components/categoryservice';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../theme';
 import { fetchSpendingLimit } from '../database/firebaseConfig';
+import takeAndProcessPhoto from '../cameraocr';
 
 export default function Homepage() {
   const { isRefreshing } = useContext(AppContext);
@@ -231,7 +232,21 @@ export default function Homepage() {
       () => {}
     );
   };
-
+  // Handle camera capture and processing
+  const handleTakePhoto = () => {
+    takeAndProcessPhoto(
+      setImageUri,
+      (amt) => {
+        if (amt !== null) {
+          setTotalSpent(prevTotal => parseFloat((prevTotal + amt).toFixed(2)));
+          refreshCategories();
+        }
+      },
+      () => {},
+      () => {}
+    );
+  };
+  
   // Handle setting a new spending limit
   const handleLimitSet = async ({ limit: newLimit, days, hours }: { limit: number; days: number; hours: number }) => {
     try {

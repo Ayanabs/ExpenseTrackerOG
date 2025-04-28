@@ -14,6 +14,7 @@ export const categoryMeta: Record<string, { icon: string; color: string }> = {
   Receipt: { icon: 'receipt', color: '#FF9800' },
   Other: { icon: 'dots-horizontal', color: '#9E9E9E' },
   Uncategorized: { icon: 'cash', color: '#9E9E9E' },
+  Shopping: { icon: 'bag', color: '#9E9E9E' },
 };
 
 // Function to get the current spending period for the logged-in user

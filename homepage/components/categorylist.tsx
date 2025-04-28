@@ -20,6 +20,7 @@ const CategoriesContainer: React.FC<ExpenseCategoriesContainerProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [indexUrl, setIndexUrl] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(true); // State to track if category list is expanded
 
   useEffect(() => {
     // Skip fetching if props are provided
@@ -53,6 +54,11 @@ const CategoriesContainer: React.FC<ExpenseCategoriesContainerProps> = ({
 
     loadCategories();
   }, [propCategories, propIsLoading]);
+
+  // Toggle the expansion state of the category list
+  const toggleExpansion = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   // Determine which data sources to use
   const categories = propCategories !== undefined ? propCategories : localCategories;
@@ -95,51 +101,71 @@ const CategoriesContainer: React.FC<ExpenseCategoriesContainerProps> = ({
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.heading}>Expense Categories</Text>
-      <View style={styles.categoriesContainer}>
-        {categories.map((category) => {
-          const percentage = Math.min(100, (category.spent / category.limit) * 100);
-          const isOverLimit = category.spent > category.limit;
-          
-          // Determine progress bar color based on percentage
-          const getProgressColor = () => {
-            if (isOverLimit) return COLORS.danger;
-            if (percentage > 80) return '#FFA500'; // Orange for warning
-            return category.color;
-          };
-
-          return (
-            <View key={category.id} style={styles.card}>
-              <View style={styles.leftSection}>
-                <View style={[styles.iconContainer, { backgroundColor: `${category.color}20` }]}>
-                  <Icon name={category.icon} size={24} color={category.color} />
-                </View>
-                <View style={styles.nameContainer}>
-                  <Text style={styles.categoryName}>{category.name}</Text>
-                  <Text style={styles.spentText}>Rs {category.spent.toFixed(0)}</Text>
-                </View>
-              </View>
-              
-              <View style={styles.rightSection}>
-                <Text style={styles.limitText}>Limit: Rs {category.limit.toFixed(0)}</Text>
-                <View style={styles.progressContainer}>
-                  <View 
-                    style={[
-                      styles.progressBar, 
-                      {
-                        width: `${percentage}%`,
-                        backgroundColor: getProgressColor()
-                      }
-                    ]}
-                  />
-                </View>
-              </View>
-            </View>
-          );
-        })}
+    <View style={styles.container}>
+      {/* Chevron button to toggle expansion */}
+      <TouchableOpacity 
+        style={styles.chevronContainer} 
+        onPress={toggleExpansion}
+        activeOpacity={0.7}
+      >
+        <Icon 
+          name={isExpanded ? "chevron-up" : "chevron-down"} 
+          size={24} 
+          color={COLORS.white} 
+        />
+      </TouchableOpacity>
+      
+      <View style={styles.headerContainer}>
+        <Text style={styles.heading}>Expense Categories</Text>
       </View>
-    </ScrollView>
+
+      {isExpanded && (
+        <ScrollView style={styles.scrollContainer}>
+          <View style={styles.categoriesContainer}>
+            {categories.map((category) => {
+              const percentage = Math.min(100, (category.spent / category.limit) * 100);
+              const isOverLimit = category.spent > category.limit;
+              
+              // Determine progress bar color based on percentage
+              const getProgressColor = () => {
+                if (isOverLimit) return COLORS.danger;
+                if (percentage > 80) return '#FFA500'; // Orange for warning
+                return category.color;
+              };
+
+              return (
+                <View key={category.id} style={styles.card}>
+                  <View style={styles.leftSection}>
+                    <View style={[styles.iconContainer, { backgroundColor: `${category.color}20` }]}>
+                      <Icon name={category.icon} size={24} color={category.color} />
+                    </View>
+                    <View style={styles.nameContainer}>
+                      <Text style={styles.categoryName}>{category.name}</Text>
+                      <Text style={styles.spentText}>Rs {category.spent.toFixed(0)}</Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.rightSection}>
+                    <Text style={styles.limitText}>Limit: Rs {category.limit.toFixed(0)}</Text>
+                    <View style={styles.progressContainer}>
+                      <View 
+                        style={[
+                          styles.progressBar, 
+                          {
+                            width: `${percentage}%`,
+                            backgroundColor: getProgressColor()
+                          }
+                        ]}
+                      />
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </ScrollView>
+      )}
+    </View>
   );
 };
 
@@ -147,12 +173,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#121212', // Dark theme background
-    padding: 16,
+  },
+  scrollContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  chevronContainer: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    backgroundColor: '#1E1E1E',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
   },
   heading: {
     fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 16,
     color: COLORS.white,
   },
   categoriesContainer: {

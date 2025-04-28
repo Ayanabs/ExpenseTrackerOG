@@ -1,4 +1,5 @@
 import { auth, firestore } from './firebaseinit';
+import messaging from '@react-native-firebase/messaging';
 import { useEffect, useState } from 'react';
 
 // Register User
@@ -8,11 +9,22 @@ export const registerUser = async (email: string, password: string, name: string
     const userCredential = await auth().createUserWithEmailAndPassword(email, password);
     const user = userCredential.user;
 
+    // Get FCM token for the device
+    let fcmToken = null;
+    try {
+      await messaging().registerDeviceForRemoteMessages();
+      fcmToken = await messaging().getToken();
+    } catch (tokenError) {
+      console.error('Error getting FCM token during registration:', tokenError);
+    }
+
     // Store additional user data in Firestore (excluding password)
     await firestore().collection('users').doc(user.uid).set({
       name,
       email,
       phone: phone || '',
+      fcmToken: fcmToken || '',
+      tokenUpdatedAt: fcmToken ? new Date().toISOString() : null,
       createdAt: new Date().toISOString(),
     });
 

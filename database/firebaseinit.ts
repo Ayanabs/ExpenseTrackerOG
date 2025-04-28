@@ -2,13 +2,12 @@
 import { initializeApp, getApps } from '@react-native-firebase/app';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import messaging from '@react-native-firebase/messaging';
 
 // Your Firebase configuration
 const firebaseConfig = {
   apiKey: 'AIzaSyB9fJLiTaJtZ2tn2fCGvuuKI-SXqGSiUbY',
-  
   projectId: 'expensetracker-e1',
-
   appId: '1:185367301858:android:cef694aa910219b5dfd8bb'
 };
 
@@ -24,4 +23,4 @@ export const initializeFirebase = () => {
 };
 
 // Export Firebase services
-export { auth, firestore };
+export { auth, firestore, messaging };
