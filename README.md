@@ -19,7 +19,7 @@ Spendless is an AI-powered mobile application that simplifies personal expense t
 
 Click below to download and install the latest version of the Spendless app:
 
-👉 [**Download APK**](https://github.com/Ayanabs/ExpenseTrackerOG/releases/latest/download/Spendless.apk)
+👉 [**Download APK**](https://github.com/Ayanabs/ExpenseTrackerOG/releases/tag/test)
 
 > Note: Make sure to enable "Install from unknown sources" on your Android device.
 
