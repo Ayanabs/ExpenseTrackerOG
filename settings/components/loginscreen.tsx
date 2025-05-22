@@ -1,60 +1,24 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
-import { loginUser, registerUser } from '../../database/firebaseAuth';
-import { firestore } from '../../database/firebaseinit';
+import { loginUser, loginWithGoogle, registerUser, configureGoogleSignIn } from '../../database/firebaseAuth';
 import { AppContext } from '../../App'; // Import the context
 import LoginModal from './loginmodal';
 import RegisterModal from './registermodal';
 import SettingsHeader from './settingsheader';
+import { ImageBackground } from 'react-native';
 
-// Improved migration function
-const migrateTemporaryData = async (userId: string) => {
-  try {
-    // Get temporary spending limit
-    const tempLimitDoc = await firestore().collection('spendingLimits').doc('temporaryUser').get();
-    
-    // If temporary data exists, migrate it to the user account
-    if (tempLimitDoc.exists) {
-      const tempLimitData = tempLimitDoc.data();
-      if (tempLimitData) {
-        await firestore().collection('spendingLimits').doc(userId).set({
-          ...tempLimitData,
-          userId: userId
-        });
-      }
-    }
-    
-    // Get temporary expenses
-    const tempExpenses = await firestore()
-      .collection('expenses')
-      .where('userId', '==', 'temporaryUser')
-      .get();
-
-    // Migrate each expense to the user account if there are any
-    if (!tempExpenses.empty) {
-      const batch = firestore().batch();
-      tempExpenses.docs.forEach(doc => {
-        const newRef = firestore().collection('expenses').doc();
-        batch.set(newRef, {
-          ...doc.data(),
-          userId: userId
-        });
-      });
-      
-      await batch.commit();
-    }
-
-    console.log('Temporary data migrated successfully to user account');
-  } catch (error) {
-    console.error('Error migrating temporary data:', error);
-  }
-};
+const backgroundImage = require('../../assets/images/background1.png');
 
 const LoginScreen = ({ navigation, onLogin }: { navigation: any, onLogin: () => void }) => {
   const { refreshData } = useContext(AppContext);
   const [loginModalVisible, setLoginModalVisible] = useState(false);
   const [registerModalVisible, setRegisterModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Configure Google Sign-In when component mounts
+  useEffect(() => {
+    configureGoogleSignIn();
+  }, []);
 
   // Add log to debug modal visibility
   console.log('Modal States:', { loginModalVisible, registerModalVisible });
@@ -70,9 +34,6 @@ const LoginScreen = ({ navigation, onLogin }: { navigation: any, onLogin: () => 
       const user = await loginUser(email, password);
       
       if (user) {
-        // Migrate any temporary data to the user account
-        await migrateTemporaryData(user.uid);
-        
         // Call refreshData to update app state
         refreshData();
         
@@ -101,7 +62,38 @@ const LoginScreen = ({ navigation, onLogin }: { navigation: any, onLogin: () => 
     }
   };
 
-  // Rest of the component remains the same
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      await loginWithGoogle();
+      
+      // Call refreshData to update app state
+      refreshData();
+      
+      // Brief timeout to ensure data is loaded
+      setTimeout(() => {
+        setIsLoading(false);
+        setLoginModalVisible(false);
+        
+        // Navigate to Homepage
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Homepage' }],
+        });
+        
+        // Then call onLogin to update app state
+        onLogin();
+      }, 500);
+      
+      return Promise.resolve();
+    } catch (error) {
+      setIsLoading(false);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to login with Google';
+      Alert.alert('Google Login Error', errorMessage);
+      return Promise.reject(error);
+    }
+  };
+
   const handleRegister = async (email: string, password: string, name: string, phone?: string) => {
     if (!email || !password || !name) {
       Alert.alert('Error', 'Name, email and password are required');
@@ -111,11 +103,6 @@ const LoginScreen = ({ navigation, onLogin }: { navigation: any, onLogin: () => 
     setIsLoading(true);
     try {
       const user = await registerUser(email, password, name, phone);
-      
-      if (user) {
-        // Migrate any temporary data to the user account
-        await migrateTemporaryData(user.uid);
-      }
       
       setIsLoading(false);
       // Show success message
@@ -144,7 +131,7 @@ const LoginScreen = ({ navigation, onLogin }: { navigation: any, onLogin: () => 
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.container2}>
+      <ImageBackground source={require('../../assets/images/background1.png')} style={styles.container2} imageStyle={styles.imageStyle}>
         <SettingsHeader />
         <View style={styles.card}>
           <TouchableOpacity 
@@ -163,13 +150,14 @@ const LoginScreen = ({ navigation, onLogin }: { navigation: any, onLogin: () => 
             <Text style={styles.registerbuttonText}>Register</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ImageBackground>
 
-      {/* Render modals regardless of visibility state - to ensure they're in the component tree */}
+      {/* Pass the Google login handler to the LoginModal */}
       <LoginModal 
         visible={loginModalVisible} 
         onClose={() => setLoginModalVisible(false)} 
-        onLogin={handleLogin} 
+        onLogin={handleLogin}
+        
       />
       <RegisterModal 
         visible={registerModalVisible} 
@@ -186,13 +174,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#CFAEFF',
+    borderRadius: 25,
   },
   container2: {
+   
     marginTop: '75%',
     height: '100%', 
     backgroundColor: '#EAE9E2',
     borderRadius: 25,
-    width: '88%',
+    width: '100%',
     alignItems: 'center',
     elevation: 15,
     shadowColor: '#000',
@@ -245,6 +235,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
   },
+  imageStyle: {
+  borderRadius: 25,
+  resizeMode: 'cover',
+},
+
 });
 
 export default LoginScreen;

@@ -22,7 +22,7 @@ const processImage = async (
       type: `image/${fileType}`,
     } as any); // React Native types workaround
     
-    const response = await fetch('https://ocr-llamaa-production.up.railway.app/ocr', {
+    const response = await fetch('https://93743526-851e-40d0-ab2f-57ee5aeeb6b3-00-3rife4kkxru97.pike.replit.dev/ocr', {
       method: 'POST',
       body: formData,
       headers: {

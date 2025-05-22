@@ -151,7 +151,7 @@ const AlertScreen: React.FC<AlertScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#d9d1e8',
   },
   header: {
     flexDirection: 'row',

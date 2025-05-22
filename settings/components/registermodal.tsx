@@ -1,7 +1,6 @@
-
 // RegisterModal.tsx
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, Button, StyleSheet, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, TextInput, Button, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 
 interface RegisterModalProps {
   visible: boolean;
@@ -74,33 +73,37 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ visible, onClose, onRegis
           
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
           
+          <Text style={styles.inputLabel}>Full Name</Text>
           <TextInput
             style={styles.input}
-            placeholder="Name"
+            placeholder="Enter your full name"
             value={name}
             onChangeText={setName}
           />
           
+          <Text style={styles.inputLabel}>Email Address</Text>
           <TextInput
             style={styles.input}
-            placeholder="Email"
+            placeholder="Enter your email address"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
           />
           
+          <Text style={styles.inputLabel}>Password</Text>
           <TextInput
             style={styles.input}
-            placeholder="Password"
+            placeholder="Create a password (minimum 6 characters)"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
           />
           
+          <Text style={styles.inputLabel}>Phone Number (Optional)</Text>
           <TextInput
             style={styles.input}
-            placeholder="Phone (optional)"
+            placeholder="Enter your phone number"
             value={phone}
             onChangeText={setPhone}
             keyboardType="phone-pad"
@@ -110,16 +113,19 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ visible, onClose, onRegis
             <ActivityIndicator size="small" color="#47248c" />
           ) : (
             <View style={styles.buttonContainer}>
-              <Button 
-                title="Register" 
+              <TouchableOpacity
+                style={styles.registerButton}
                 onPress={handleSubmit}
-                color="#47248c"
-              />
-              <Button 
-                title="Cancel" 
+              >
+                <Text style={styles.registerButtonText}>Register</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.cancelButton}
                 onPress={onClose}
-                color="#666"
-              />
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -140,11 +146,23 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: 'white',
     borderRadius: 10,
+    elevation: 5, // For Android shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   modalTitle: {
     fontSize: 20,
-    marginBottom: 10,
+    marginBottom: 20,
     textAlign: 'center',
+    fontWeight: 'bold',
+    color: '#47248c',
+  },
+  inputLabel: {
+    fontSize: 14,
+    marginBottom: 5,
+    color: '#333',
+    fontWeight: '500',
   },
   input: {
     height: 40,
@@ -162,6 +180,25 @@ const styles = StyleSheet.create({
     color: 'red',
     marginBottom: 10,
     textAlign: 'center',
+  },
+  registerButton: {
+    backgroundColor: '#47248c',
+    padding: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  registerButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    padding: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  cancelButtonText: {
+    color: '#666',
   }
 });
 

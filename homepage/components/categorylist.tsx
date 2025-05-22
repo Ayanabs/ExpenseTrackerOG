@@ -108,15 +108,11 @@ const CategoriesContainer: React.FC<ExpenseCategoriesContainerProps> = ({
         onPress={toggleExpansion}
         activeOpacity={0.7}
       >
-        <Icon 
-          name={isExpanded ? "chevron-up" : "chevron-down"} 
-          size={24} 
-          color={COLORS.white} 
-        />
+      
       </TouchableOpacity>
       
       <View style={styles.headerContainer}>
-        <Text style={styles.heading}>Expense Categories</Text>
+        <Text style={styles.heading}>Categories</Text>
       </View>
 
       {isExpanded && (
@@ -172,25 +168,30 @@ const CategoriesContainer: React.FC<ExpenseCategoriesContainerProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212', // Dark theme background
+    backgroundColor: '#121212',
+    marginTop:'10%', // Dark theme background
+    borderRadius: 16,
+    
   },
   scrollContainer: {
     flex: 1,
     paddingHorizontal: 16,
+    paddingBottom: 25,
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
+    borderRadius: 16,
     marginBottom: 8,
   },
   chevronContainer: {
     alignItems: 'center',
     paddingVertical: 8,
     backgroundColor: '#1E1E1E',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
   },
   heading: {
     fontSize: 22,
@@ -239,10 +240,11 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flex: 1,
+    marginTop: '20%',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#121212',
-    padding: 20,
+    padding: 60,
   },
   emptyText: {
     marginTop: 12,
@@ -263,6 +265,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
+  
     marginBottom: 8,
     backgroundColor: '#1E1E1E', // Slightly lighter than background for card
     borderRadius: 8,

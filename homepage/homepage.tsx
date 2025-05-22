@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
+// Fixed Homepage.tsx with better SMS integration
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import {
-  View, ScrollView, StatusBar, Text, StyleSheet, ActivityIndicator
+  View, ScrollView, StatusBar, Text, StyleSheet, ActivityIndicator, RefreshControl
 } from 'react-native';
-import { AppContext } from '../App'; // Import the context
+import { AppContext } from '../App';
 
 import { pickAndProcessImage } from '../ocr';
 import { Category } from './components/category';
@@ -22,7 +23,7 @@ import { fetchSpendingLimit } from '../database/firebaseConfig';
 import takeAndProcessPhoto from '../cameraocr';
 
 export default function Homepage() {
-  const { isRefreshing } = useContext(AppContext);
+  const { isRefreshing, refreshData } = useContext(AppContext);
   
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -38,11 +39,11 @@ export default function Homepage() {
   
   const [isLoading, setIsLoading] = useState(true);
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Authentication state listener
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged(user => {
-      // Reset all state values when auth state changes
       resetAllState();
       
       if (user) {
@@ -55,10 +56,9 @@ export default function Homepage() {
       }
     });
   
-    return subscriber; // Unsubscribe on unmount
+    return subscriber;
   }, []);
 
-  // Reset all state values
   const resetAllState = () => {
     setImageUri(null);
     setCategories([]);
@@ -75,16 +75,12 @@ export default function Homepage() {
     setIsCategoriesLoading(true);
   };
 
-  // Fetch user data including spending limit and categories
   const fetchUserData = async (userId: string) => {
     try {
       setIsLoading(true);
       setIsCategoriesLoading(true);
       
-      // Fetch the spending limit
       await fetchSpendingLimit();
-      
-      // Fetch categories with expenses
       const categoriesData = await fetchCategoriesWithExpenses();
       console.log('Categories data:', categoriesData);
       setCategories(categoriesData);
@@ -98,7 +94,6 @@ export default function Homepage() {
     }
   };
   
-  // Refresh categories data
   const refreshCategories = async () => {
     try {
       setIsCategoriesLoading(true);
@@ -131,9 +126,14 @@ export default function Homepage() {
             setStartDate(start);
             setEndDate(end);
             setTotalDuration(Math.floor((end.getTime() - start.getTime()) / 1000));
+            
+            console.log('Spending limit updated:', {
+              limit: spendingLimitData.limit,
+              startDate: start,
+              endDate: end
+            });
           }
         } else {
-          // Default values if no document exists
           setMaxtotal(0);
           setStartDate(null);
           setEndDate(null);
@@ -148,12 +148,24 @@ export default function Homepage() {
     return () => unsubscribe();
   }, []);
 
-  // Expenses real-time listener
+  // FIXED: Enhanced expenses real-time listener with better error handling and logging
   useEffect(() => {
-    if (!startDate || !endDate) return () => {};
+    if (!startDate || !endDate) {
+      console.log('No date range set, skipping expenses listener');
+      return () => {};
+    }
   
     const currentUser = auth().currentUser;
-    if (!currentUser) return () => {};
+    if (!currentUser) {
+      console.log('No current user, skipping expenses listener');
+      return () => {};
+    }
+
+    console.log('Setting up expenses listener for date range:', {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      userId: currentUser.uid
+    });
   
     const expensesCollectionRef = firestore()
       .collection('expenses')
@@ -163,32 +175,62 @@ export default function Homepage() {
   
     const unsubscribe = expensesCollectionRef.onSnapshot(
       async (snapshot) => {
-        // Calculate total spent
+        console.log('Expenses snapshot received, documents count:', snapshot.size);
+        
+        // Calculate total spent with detailed logging
         let total = 0;
+        let smsTotal = 0;
+        let expenseDetails: any[] = [];
+        
         snapshot.forEach((doc) => {
           const expenseData = doc.data();
-          if (expenseData.amount) {
-            total += parseFloat(expenseData.amount.toString());
+          const amount = parseFloat(expenseData.amount?.toString() || '0');
+          
+          expenseDetails.push({
+            id: doc.id,
+            amount: amount,
+            source: expenseData.source,
+            category: expenseData.category,
+            date: expenseData.date?.toDate?.()?.toISOString() || 'No date'
+          });
+          
+          total += amount;
+          
+          // Track SMS-specific expenses
+          if (expenseData.source?.includes('SMS') || expenseData.category === 'SMS') {
+            smsTotal += amount;
           }
         });
+
+        console.log('Expense calculation details:', {
+          totalExpenses: snapshot.size,
+          totalAmount: total,
+          smsAmount: smsTotal,
+          expenseDetails: expenseDetails
+        });
   
-        console.log(`Total spent: ${total}`);
         setTotalSpent(total);
-  
+
+        // Update percentage
         if (maxtotal > 0) {
           const percentage = (total / maxtotal) * 100;
+          console.log('Updating spent percentage:', percentage);
           setSpentPercentage(percentage);
         }
         
         // Refresh categories when expenses change
+        console.log('Refreshing categories after expense update...');
         await refreshCategories();
       },
       (error) => {
-        console.error('Error fetching expenses:', error);
+        console.error('Error in expenses listener:', error);
       }
     );
   
-    return () => unsubscribe();
+    return () => {
+      console.log('Cleaning up expenses listener');
+      unsubscribe();
+    };
   }, [startDate, endDate, maxtotal]);
   
   // Timer countdown
@@ -209,36 +251,27 @@ export default function Homepage() {
   }, [startDate, endDate]);
 
   const handleSmsReceived = (sms: string) => {
+    console.log('SMS received in Homepage:', sms);
     setSmsText(sms);
   };
 
+  // FIXED: Better SMS amount handling with validation
   const handleAmountExtracted = (amount: string | number) => {
+    console.log('Amount extracted from SMS:', amount);
     setExtractedAmount(amount);
-    setTotalSpent((prevTotal) => prevTotal + parseFloat(amount.toString()));
-    refreshCategories();
+    
+    // Force a refresh of categories after a short delay to ensure Firestore has updated
+    setTimeout(() => {
+      console.log('Delayed refresh after SMS processing...');
+      refreshCategories();
+    }, 1000);
   };
 
-  // Handle receipt image processing
   const handleAddPress = () => {
     pickAndProcessImage(
       setImageUri,
       (amt) => {
         if (amt !== null) {
-          setTotalSpent(prevTotal => parseFloat((prevTotal + amt).toFixed(2)));
-          refreshCategories();
-        }
-      },
-      () => {},
-      () => {}
-    );
-  };
-  // Handle camera capture and processing
-  const handleTakePhoto = () => {
-    takeAndProcessPhoto(
-      setImageUri,
-      (amt) => {
-        if (amt !== null) {
-          setTotalSpent(prevTotal => parseFloat((prevTotal + amt).toFixed(2)));
           refreshCategories();
         }
       },
@@ -247,7 +280,19 @@ export default function Homepage() {
     );
   };
   
-  // Handle setting a new spending limit
+  const handleTakePhoto = () => {
+    takeAndProcessPhoto(
+      setImageUri,
+      (amt) => {
+        if (amt !== null) {
+          refreshCategories();
+        }
+      },
+      () => {},
+      () => {}
+    );
+  };
+  
   const handleLimitSet = async ({ limit: newLimit, days, hours }: { limit: number; days: number; hours: number }) => {
     try {
       const start = new Date();
@@ -255,6 +300,12 @@ export default function Homepage() {
       
       const currentUser = auth().currentUser;
       if (!currentUser) return;
+      
+      console.log('Setting new spending limit:', {
+        limit: newLimit,
+        startDate: start.toISOString(),
+        endDate: end.toISOString()
+      });
       
       await firestore().collection('spendingLimits').doc(currentUser.uid).set({
         limit: newLimit,
@@ -267,11 +318,29 @@ export default function Homepage() {
     }
   };
 
+  const onRefresh = useCallback(async () => {
+    if (!auth().currentUser) return;
+    
+    try {
+      console.log('Manual refresh triggered');
+      setRefreshing(true);
+      
+      await fetchSpendingLimit();
+      await refreshCategories();
+      
+      setRefreshing(false);
+    } catch (error) {
+      console.error('Error during refresh:', error);
+      setRefreshing(false);
+      if (refreshData) refreshData();
+    }
+  }, [refreshData]);
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8A4FFF" />
-        <Text style={styles.loadingText}>Loading data...</Text>
+        <ActivityIndicator size="large" color={COLORS.white} />
+        <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
   }
@@ -279,28 +348,47 @@ export default function Homepage() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['right', 'left', 'bottom','top']}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} translucent={false} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Header />
-        <CircularProgress percentage={spentPercentage} totalSpent={totalSpent} maxtotal={maxtotal} />
-        <View style={styles.row}>
-          <TimeRemainingHeader remainingTime={remainingTime} totalDuration={totalDuration} />
-          <AddLimitModal onLimitSet={handleLimitSet} />
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#8A4FFF"]}
+            tintColor="#8A4FFF"
+            title="Refreshing data..."
+            titleColor="#FFFFFF"
+            progressBackgroundColor={COLORS.background}
+          />
+        }
+      >
+        
+        <View style={styles.dashboardContainer}>
+          <CircularProgress percentage={spentPercentage} totalSpent={totalSpent} maxtotal={maxtotal} />
+          <View style={styles.row}>
+            <TimeRemainingHeader remainingTime={remainingTime} totalDuration={totalDuration} />
+            <AddLimitModal onLimitSet={handleLimitSet} />
+          </View>
         </View>
 
-        {/* Categories section */}
         <CategoriesContainer 
           categories={categories} 
-          isLoading={isCategoriesLoading || isRefreshing} 
+          isLoading={isCategoriesLoading || isRefreshing || refreshing} 
         />
 
-        {/* SMS Parser section */}
+        {/* FIXED: Pass setTotalSpent but don't rely on it for updates */}
         <SmsParser
           onSmsReceived={handleSmsReceived}
           onAmountExtracted={handleAmountExtracted}
-          setTotalSpent={setTotalSpent}
+          setTotalSpent={(amount) => {
+            console.log('SMS Parser setTotalSpent called with:', amount);
+            // Don't manually update totalSpent - let Firestore listener handle it
+            // Just trigger a refresh to ensure data consistency
+            refreshCategories();
+          }}
         />
       </ScrollView>
-      <BottomTabs onAddPress={handleAddPress} />
+      <BottomTabs onAddPress={handleAddPress} onTakePhoto={handleTakePhoto} />
     </SafeAreaView>
   );
 }
@@ -312,7 +400,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 20,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.white,
   },
   row: {
     flexDirection: 'row',
@@ -329,5 +417,28 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: COLORS.white,
+  },
+   timeRemainingText: {
+    color: COLORS.black,
+    fontSize: 14,
+    marginTop: 10,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  dashboardContainer: {
+    marginTop: 25,
+    marginHorizontal: 8,
+    marginBottom: 16,
+    padding: 15,
+    backgroundColor: COLORS.background || '#1E1E2E',
+    borderRadius: 25,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 8,
   }
 });

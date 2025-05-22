@@ -8,9 +8,9 @@ import { COLORS } from '../../theme';
 const SettingsHeader = () => { 
   const navigation = useNavigation(); 
   return (
-  <View style={styles.container}> 
+  <View style={styles.containersettings}> 
     <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Icon name="arrow-left" size={24} color={COLORS.black} />
+              <Icon name="arrow-left" size={24} color={COLORS.white} />
             </TouchableOpacity>
     <Text style={styles.title}>Settings</Text> 
     <View style={{ width: 24 }} /> {/* Spacer for symmetry */} 
@@ -20,16 +20,17 @@ const SettingsHeader = () => {
   
 
 const styles = StyleSheet.create({ 
-  container: { 
-    backgroundColor: '#EAE9E2', 
+  containersettings: { 
+    backgroundColor: 'transparent', 
     flexDirection: 'row', 
     alignItems: 'center', 
     justifyContent: 'space-between', 
-    padding: 25, 
+    padding: '20%', 
   }, 
   title: { 
-    fontSize: 18, 
+    fontSize: 24, 
     fontWeight: 'bold', 
+    color: COLORS.white,
   }, 
 }); 
  

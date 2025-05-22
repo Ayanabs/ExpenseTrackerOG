@@ -31,8 +31,8 @@ const CalenderHeader = () => {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: COLORS.background,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    //backgroundColor: COLORS.background,
+    //paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     flexDirection: 'row',

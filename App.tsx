@@ -176,13 +176,7 @@ export default function App() {
   };
 
   // Show loading screen while checking authentication
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#CFAEFF' }}>
-        <ActivityIndicator size="large" color="#47248c" />
-      </View>
-    );
-  }
+ 
 
   return (
     <AppContext.Provider value={{ refreshData, isRefreshing }}>

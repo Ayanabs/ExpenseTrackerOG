@@ -21,7 +21,7 @@ export default function AddLimitModal({ onLimitSet }: { onLimitSet: (data: { lim
         onPress={() => setModalVisible(true)}
         activeOpacity={0.8}
       >
-        <Text style={styles.goalButtonText}>SET LIMIT</Text>
+        <Text style={styles.goalButtonText}>SET SPENDING LIMIT</Text>
       </TouchableOpacity>
 
       <Modal
@@ -36,7 +36,7 @@ export default function AddLimitModal({ onLimitSet }: { onLimitSet: (data: { lim
         >
           <View style={styles.modalView}>
             <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-              <Text style={styles.modalTitle}>Set Spending Goal</Text>
+              <Text style={styles.modalTitle}>Set Spending Limit</Text>
               
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Total Budget (Rs)</Text>
@@ -98,7 +98,7 @@ export default function AddLimitModal({ onLimitSet }: { onLimitSet: (data: { lim
                   onPress={handleSetLimitClick}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.setButtonText}>Set Goal</Text>
+                  <Text style={styles.setButtonText}>Set Limit</Text>
                 </TouchableOpacity>
               </View>
             </Pressable>
@@ -114,6 +114,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   goalButton: {
+    marginTop: 10,
+    marginLeft: '30%',
     backgroundColor: '#2196F3',
     paddingVertical: 8,
     paddingHorizontal: 10,

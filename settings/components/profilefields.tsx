@@ -189,6 +189,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     marginHorizontal: 20,
     borderRadius: 12,
+    
   },
   disabledInput: {
     opacity: 0.7,

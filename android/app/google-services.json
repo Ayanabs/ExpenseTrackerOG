@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "185367301858",
+    "firebase_url": "https://expensetracker-e1-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "expensetracker-e1",
     "storage_bucket": "expensetracker-e1.firebasestorage.app"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.expensivetrackerog"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "185367301858-mavqiiuvb0mqn81vlhq2lrl636vdlkop.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.expensivetrackerog",
+            "certificate_hash": "decd45f6781f30d7485c455f6ce6ecd95fec127c"
+          }
+        },
+        {
+          "client_id": "185367301858-vf9cp08me2m3ge07glujjp1hqp9m483p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyB9fJLiTaJtZ2tn2fCGvuuKI-SXqGSiUbY"
@@ -20,7 +34,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "185367301858-vf9cp08me2m3ge07glujjp1hqp9m483p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
