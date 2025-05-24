@@ -4,9 +4,10 @@ import AnalyticsHeader from '../analytics/components/analyticsheader';
 import MonthSelector from '../analytics/components/monthselector'; 
 import IncomeOutcomeChart from '../analytics/components/incomeoutcomechart'; 
 import MonthlyBudgetCard from '../analytics/components/monthlybudgetcard'; // Import MonthlyBudgetCard
-import CategoryListContainer from '../homepage/components/categorylist'; 
-import { getGroupedExpensesByCategory } from '../homepage/components/categorygroupexpense'; 
+import CategoriesContainer from '../homepage/components/categorylist'; 
+import { fetchCategoriesWithExpenses } from '../homepage/components/categoryservice'; 
 import { getFirestore } from '@react-native-firebase/firestore'; // Import firestore to get the total spent
+import { COLORS } from '../theme';
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -42,7 +43,7 @@ const AnalyticsScreen = () => {
   // Fetch category data from Firestore
   useEffect(() => {
     const loadCategories = async () => {
-      const fetchedCategories = await getGroupedExpensesByCategory(); // Fetch categories from your function
+      const fetchedCategories = await fetchCategoriesWithExpenses(); // Fetch categories from your function
       setCategories(fetchedCategories); // Update categories state
     };
 
@@ -56,13 +57,13 @@ const AnalyticsScreen = () => {
 
   return ( 
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={{ backgroundColor: '#FAFAFA' }}> 
+      <ScrollView style={{ backgroundColor: COLORS.background }}> 
         <AnalyticsHeader /> 
         <MonthSelector selectedMonth={selectedMonth} onMonthSelect={handleMonthSelect} /> 
         <IncomeOutcomeChart selectedMonth={selectedMonth} /> {/* Pass selectedMonth to IncomeOutcomeChart */}
         {/* Pass both selectedMonth and totalSpent to MonthlyBudgetCard */}
-        <MonthlyBudgetCard selectedMonth={selectedMonth} totalSpent={totalSpent} /> 
-        <CategoryListContainer categories={categories} />
+        <MonthlyBudgetCard selectedMonth={selectedMonth} /> 
+        <CategoriesContainer categories={categories} isLoading={false} />
       </ScrollView> 
     </SafeAreaView>
   ); 

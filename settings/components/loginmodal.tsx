@@ -1,6 +1,17 @@
-// LoginModal.tsx
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, Button, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { 
+  Modal, 
+  View, 
+  Text, 
+  TextInput, 
+  Button, 
+  StyleSheet, 
+  ActivityIndicator, 
+  TouchableOpacity,
+  Image,
+  Alert
+} from 'react-native';
+import { auth } from '../../database/firebaseinit';
 
 interface LoginModalProps {
   visible: boolean;
@@ -9,10 +20,15 @@ interface LoginModalProps {
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose, onLogin }) => {
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [forgotPasswordModalVisible, setForgotPasswordModalVisible] = useState(false);
+
+  // Add log to debug modal visibility
+  console.log('LoginModal render - visible:', visible);
 
   const validateForm = () => {
     if (!email) {
@@ -50,45 +66,87 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose, onLogin }) =>
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Please enter your email address to reset your password');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      await auth().sendPasswordResetEmail(email);
+      setIsLoading(false);
+      Alert.alert(
+        'Password Reset Email Sent',
+        'Check your email for instructions to reset your password',
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      setIsLoading(false);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send reset email. Please try again.';
+      setError(errorMessage);
+    }
+  };
+
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent={true}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      onRequestClose={onClose}
+      transparent={true}
+      statusBarTranslucent={true}
+    >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Login</Text>
           
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
           
+          <Text style={styles.inputLabel}>Email</Text>
           <TextInput
             style={styles.input}
-            placeholder="Email"
+            placeholder="Enter your email"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
           />
           
+          <Text style={styles.inputLabel}>Password</Text>
           <TextInput
             style={styles.input}
-            placeholder="Password"
+            placeholder="Enter your password"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
           />
           
+          <TouchableOpacity 
+            onPress={handleForgotPassword}
+            style={styles.forgotPasswordButton}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
+
           {isLoading ? (
             <ActivityIndicator size="small" color="#47248c" />
           ) : (
             <View style={styles.buttonContainer}>
-              <Button 
-                title="Login" 
-                onPress={handleSubmit} 
-                color="#47248c"
-              />
-              <Button 
-                title="Cancel" 
-                onPress={onClose} 
-                color="#666"
-              />
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={handleSubmit}
+              >
+                <Text style={styles.loginButtonText}>Login</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={onClose}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -109,11 +167,24 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: 'white',
     borderRadius: 10,
+    elevation: 5, // For Android shadow
+    
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   modalTitle: {
     fontSize: 20,
-    marginBottom: 10,
+    marginBottom: 20,
     textAlign: 'center',
+    fontWeight: 'bold',
+    color: '#47248c',
+  },
+  inputLabel: {
+    fontSize: 14,
+    marginBottom: 5,
+    color: '#333',
+    fontWeight: '500',
   },
   input: {
     height: 40,
@@ -131,6 +202,33 @@ const styles = StyleSheet.create({
     color: 'red',
     marginBottom: 10,
     textAlign: 'center',
+  },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 15,
+  },
+  forgotPasswordText: {
+    color: '#47248c',
+    fontSize: 12,
+  },
+  loginButton: {
+    backgroundColor: '#47248c',
+    padding: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  loginButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    padding: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  cancelButtonText: {
+    color: '#666',
   }
 });
 

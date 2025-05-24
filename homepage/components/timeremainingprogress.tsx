@@ -17,12 +17,12 @@ const TimeCircleProgress: React.FC<Props> = ({ percentage, totalSpent, timeLabel
   const size = 100;
   const circumference = 2 * Math.PI * radius;
   const animatedValue = useRef(new Animated.Value(0)).current;
-
+  
   const animatedStrokeDashoffset = animatedValue.interpolate({
     inputRange: [0, 100],
     outputRange: [circumference, 0],
   });
-
+  
   useEffect(() => {
     Animated.timing(animatedValue, {
       toValue: percentage,
@@ -31,7 +31,7 @@ const TimeCircleProgress: React.FC<Props> = ({ percentage, totalSpent, timeLabel
       useNativeDriver: false,
     }).start();
   }, [percentage]);
-
+  
   return (
     <View style={styles.container}>
       <Svg height={size} width={size} viewBox={`0 0 ${size} ${size}`}>
@@ -56,6 +56,7 @@ const TimeCircleProgress: React.FC<Props> = ({ percentage, totalSpent, timeLabel
           transform={`rotate(-90, ${size / 2}, ${size / 2})`}
         />
       </Svg>
+      
       <View style={styles.centerText}>
         <Text style={styles.percentage}>{percentage.toFixed(0)}%</Text>
         {totalSpent !== undefined ? (
@@ -64,6 +65,8 @@ const TimeCircleProgress: React.FC<Props> = ({ percentage, totalSpent, timeLabel
           <Text style={styles.amount}>{timeLabel}</Text>
         ) : null}
       </View>
+      
+      <Text style={styles.timeRemainingText}>Time Remaining</Text>
     </View>
   );
 };
@@ -72,13 +75,17 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -80,
+    marginTop: -60,
     marginLeft: 10,
   },
   centerText: {
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
+    top: -15,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   percentage: {
     fontSize: 16,
@@ -86,9 +93,15 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
   amount: {
-    fontSize: 12,
+    fontSize: 8,
     color: COLORS.primary,
     textAlign: 'center',
+  },
+  timeRemainingText: {
+    fontSize: 12,
+    color: COLORS.primary,
+    marginTop: 0,
+    fontWeight: '500',
   },
 });
 

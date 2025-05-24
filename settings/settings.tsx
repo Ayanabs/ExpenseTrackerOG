@@ -5,6 +5,7 @@ import ProfileAvatar from './components/profileavatar';
 import ProfileFields from './components/profilefields';
 import AlertsToggle from './components/alertstoggle';
 import LogoutButton from './components/logoutbutton';
+import { COLORS } from '../theme';
 
 const SettingsScreen = ({ onLogout }: { onLogout: () => void }) => {
   return (
@@ -25,7 +26,8 @@ const SettingsScreen = ({ onLogout }: { onLogout: () => void }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EAE9E2',
+    backgroundColor: '#d9d1e8',
+    
   },
   scroll: {
     flex: 1,
@@ -34,8 +36,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E1E1E',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
+    paddingBottom: '21%',
     paddingTop: 20,
     flex: 1,
+  
   },
 });
 

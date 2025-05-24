@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Text, Alert, ActivityIndicator } from 'react-native';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+import auth from '@react-native-firebase/auth';  // Import from React Native Firebase
+import firestore from '@react-native-firebase/firestore';  // Import from React Native Firebase
 
 const ProfileFields = () => {
   // State for user fields
@@ -12,9 +12,6 @@ const ProfileFields = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  const auth = getAuth();
-  const db = getFirestore();
-
   // Fetch user data on component mount
   useEffect(() => {
     fetchUserData();
@@ -24,17 +21,17 @@ const ProfileFields = () => {
   const fetchUserData = async () => {
     setIsLoading(true);
     try {
-      const currentUser = auth.currentUser;
-      
+      const currentUser = auth().currentUser;
+
       if (currentUser) {
-        const userDocRef = doc(db, 'users', currentUser.uid);
-        const userSnapshot = await getDoc(userDocRef);
-        
-        if (userSnapshot.exists()) {
+        const userDocRef = firestore().doc(`users/${currentUser.uid}`);
+        const userSnapshot = await userDocRef.get();
+
+        if (userSnapshot.exists) {
           const userData = userSnapshot.data();
-          setName(userData.name || '');
-          setEmail(userData.email || '');
-          setContact(userData.phone || ''); // Assuming 'phone' is the field name in your DB
+          setName(userData?.name || '');
+          setEmail(userData?.email || '');
+          setContact(userData?.phone || ''); // Assuming 'phone' is the field name in your DB
         } else {
           Alert.alert('Error', 'User data not found');
         }
@@ -53,39 +50,38 @@ const ProfileFields = () => {
   const saveUserData = async () => {
     setIsSaving(true);
     try {
-      const currentUser = auth.currentUser;
-      
+      const currentUser = auth().currentUser;
+
       if (!currentUser) {
         Alert.alert('Error', 'No user is signed in');
         return;
       }
-      
+
       // Validate inputs
       if (!name.trim()) {
         Alert.alert('Error', 'Name cannot be empty');
         return;
       }
-      
+
       if (!email.trim()) {
         Alert.alert('Error', 'Email cannot be empty');
         return;
       }
-      
+
       // Update user document in Firestore
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userDocRef, {
+      const userDocRef = firestore().doc(`users/${currentUser.uid}`);
+      await userDocRef.update({
         name: name.trim(),
         email: email.trim(),
         phone: contact.trim() // Assuming 'phone' is the field name in your DB
       });
-      
+
       // Optionally update Auth email if it was changed
       if (email !== currentUser.email) {
-        // Note: This would typically require re-authentication
-        // For simplicity, we're just updating the Firestore document
-        Alert.alert('Note', 'Email changes require re-authentication to update in your account');
+        await currentUser.updateEmail(email);  // Update email in Firebase Authentication
+        Alert.alert('Note', 'Email updated in Firebase Authentication');
       }
-      
+
       Alert.alert('Success', 'Profile updated successfully');
       setIsEditing(false);
     } catch (error) {
@@ -193,6 +189,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     marginHorizontal: 20,
     borderRadius: 12,
+    
   },
   disabledInput: {
     opacity: 0.7,

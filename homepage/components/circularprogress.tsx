@@ -45,7 +45,7 @@ const CircleProgress: React.FC<Props> = ({ totalSpent, label, maxtotal }) => {
 
   return (
     <View style={styles.container}>
-      <Svg height="250" width="250" viewBox="0 0 250 250">
+      <Svg height="280" width="280" viewBox="0 0 250 250">
         {/* Background Ring */}
         <Circle
           cx="125"
@@ -84,9 +84,9 @@ const CircleProgress: React.FC<Props> = ({ totalSpent, label, maxtotal }) => {
         {totalSpent !== undefined && maxtotal !== undefined && (
           <Line
             x1="80"
-            y1="170"
+            y1="162"
             x2="175"
-            y2="170"
+            y2="162"
             stroke={COLORS.primary}
             strokeWidth="1.5"
             strokeDasharray="5,5" // Optional: dashed line

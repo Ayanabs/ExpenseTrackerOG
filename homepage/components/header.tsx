@@ -126,7 +126,7 @@ const Header = () => {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: 'transparent', // Make the background transparent
+    backgroundColor: 'transparent', 
   },
   header: {
     flexDirection: 'row',

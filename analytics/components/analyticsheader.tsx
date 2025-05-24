@@ -15,7 +15,7 @@ const AnalyticsHeader = () => {
         </TouchableOpacity>
         <Text style={styles.title}>Analytics</Text>
         <TouchableOpacity>
-          <Icon name="account-circle" size={26} color={COLORS.primary} />
+         
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -31,8 +31,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    marginTop: 30,
+    padding: 20,
+    
     
     backgroundColor: '#F5F5F5',
   },

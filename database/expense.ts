@@ -6,5 +6,6 @@ export interface Expense {
     source: string;       // The source of the expense (e.g., "Receipt")
     date: FirebaseFirestoreTypes.Timestamp; // The date the expense was recorded (Firestore Timestamp type)
     category: string;     // The category of the expense (e.g., "Food", "Travel")
+    userId:string;     // The ID of the user who made the expense (e.g., "user123")
   }
   

@@ -1,14 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
-import { loginUser, registerUser } from '../../database/firebaseAuth'; // Import authentication logic
+import { loginUser, loginWithGoogle, registerUser, configureGoogleSignIn } from '../../database/firebaseAuth';
+import { AppContext } from '../../App'; // Import the context
 import LoginModal from './loginmodal';
 import RegisterModal from './registermodal';
 import SettingsHeader from './settingsheader';
+import { ImageBackground } from 'react-native';
 
-const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
+const backgroundImage = require('../../assets/images/background1.png');
+
+const LoginScreen = ({ navigation, onLogin }: { navigation: any, onLogin: () => void }) => {
+  const { refreshData } = useContext(AppContext);
   const [loginModalVisible, setLoginModalVisible] = useState(false);
   const [registerModalVisible, setRegisterModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Configure Google Sign-In when component mounts
+  useEffect(() => {
+    configureGoogleSignIn();
+  }, []);
+
+  // Add log to debug modal visibility
+  console.log('Modal States:', { loginModalVisible, registerModalVisible });
 
   const handleLogin = async (email: string, password: string) => {
     if (!email || !password) {
@@ -18,14 +31,65 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
 
     setIsLoading(true);
     try {
-      await loginUser(email, password);  // Use the login function from firebaseAuth
-      setIsLoading(false);
-      onLogin();  // After login, call onLogin callback to update app state
+      const user = await loginUser(email, password);
+      
+      if (user) {
+        // Call refreshData to update app state
+        refreshData();
+        
+        // Brief timeout to ensure data is loaded
+        setTimeout(() => {
+          setIsLoading(false);
+          setLoginModalVisible(false);
+          
+          // Navigate to Homepage
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Homepage' }],
+          });
+          
+          // Then call onLogin to update app state
+          onLogin();
+        }, 500);
+      }
+      
       return Promise.resolve();
     } catch (error) {
       setIsLoading(false);
       const errorMessage = error instanceof Error ? error.message : 'Failed to login';
       Alert.alert('Login Error', errorMessage);
+      return Promise.reject(error);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      await loginWithGoogle();
+      
+      // Call refreshData to update app state
+      refreshData();
+      
+      // Brief timeout to ensure data is loaded
+      setTimeout(() => {
+        setIsLoading(false);
+        setLoginModalVisible(false);
+        
+        // Navigate to Homepage
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Homepage' }],
+        });
+        
+        // Then call onLogin to update app state
+        onLogin();
+      }, 500);
+      
+      return Promise.resolve();
+    } catch (error) {
+      setIsLoading(false);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to login with Google';
+      Alert.alert('Google Login Error', errorMessage);
       return Promise.reject(error);
     }
   };
@@ -38,7 +102,8 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
 
     setIsLoading(true);
     try {
-      await registerUser(email, password, name, phone);  // Use the register function from firebaseAuth
+      const user = await registerUser(email, password, name, phone);
+      
       setIsLoading(false);
       // Show success message
       Alert.alert('Success', 'Registration successful! You can now login.');
@@ -54,14 +119,24 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
     }
   };
 
+  const handleLoginPress = () => {
+    console.log('Login button pressed');
+    setLoginModalVisible(true);
+  };
+
+  const handleRegisterPress = () => {
+    console.log('Register button pressed');
+    setRegisterModalVisible(true);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.container2}>
+      <ImageBackground source={require('../../assets/images/background1.png')} style={styles.container2} imageStyle={styles.imageStyle}>
         <SettingsHeader />
         <View style={styles.card}>
           <TouchableOpacity 
             style={styles.loginButton} 
-            onPress={() => setLoginModalVisible(true)}
+            onPress={handleLoginPress}
             disabled={isLoading}
           >
             <Text style={styles.buttonText}>Login</Text> 
@@ -69,19 +144,20 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
 
           <TouchableOpacity 
             style={styles.registerButton} 
-            onPress={() => setRegisterModalVisible(true)}
+            onPress={handleRegisterPress}
             disabled={isLoading}
           >
             <Text style={styles.registerbuttonText}>Register</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ImageBackground>
 
-      {/* Modal Components - passing the handler functions properly */}
+      {/* Pass the Google login handler to the LoginModal */}
       <LoginModal 
         visible={loginModalVisible} 
         onClose={() => setLoginModalVisible(false)} 
-        onLogin={handleLogin} 
+        onLogin={handleLogin}
+        
       />
       <RegisterModal 
         visible={registerModalVisible} 
@@ -98,13 +174,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#CFAEFF',
+    borderRadius: 25,
   },
   container2: {
+   
     marginTop: '75%',
     height: '100%', 
     backgroundColor: '#EAE9E2',
     borderRadius: 25,
-    width: '88%',
+    width: '100%',
     alignItems: 'center',
     elevation: 15,
     shadowColor: '#000',
@@ -157,6 +235,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
   },
+  imageStyle: {
+  borderRadius: 25,
+  resizeMode: 'cover',
+},
+
 });
 
 export default LoginScreen;

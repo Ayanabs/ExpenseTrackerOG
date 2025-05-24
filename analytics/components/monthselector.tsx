@@ -28,6 +28,8 @@ const styles = StyleSheet.create({
   container: { 
     paddingHorizontal: 16, 
     marginVertical: 10, 
+    backgroundColor: '#ab9dc4',
+    borderRadius: 0,
   }, 
   chip: { 
     paddingVertical: 8, 
@@ -35,6 +37,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E0E0', 
     borderRadius: 20, 
     marginRight: 8, 
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 5,
   }, 
   activeChip: { 
     backgroundColor: COLORS.primary, 

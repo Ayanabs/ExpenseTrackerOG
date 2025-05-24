@@ -1,6 +1,7 @@
 import * as ImagePicker from 'react-native-image-picker';
 import firestore from '@react-native-firebase/firestore';
-import { Expense } from './database/expense'; // Assuming you have an interface or type for Expense
+import auth from '@react-native-firebase/auth';
+
 
 /**
  * Sends image to FastAPI backend for OCR processing and saves result to Firestore
@@ -20,9 +21,9 @@ const processImage = async (
       uri,
       name: filename,
       type: `image/${fileType}`,
-    } as any); // React Native types workaround
+    } as any); 
 
-    const response = await fetch('https://ocr-llamaa-production.up.railway.app/ocr', {
+    const response = await fetch('https://93743526-851e-40d0-ab2f-57ee5aeeb6b3-00-3rife4kkxru97.pike.replit.dev/ocr', {
       method: 'POST',
       body: formData,
       headers: {
@@ -40,30 +41,28 @@ const processImage = async (
     const currency = data.currency ?? null;
     const category = data.category ?? 'Uncategorized';
 
-    // Fetch the current spending period from Firestore (like in SMS parser)
-    const currentPeriodDoc = await firestore().collection('spendingLimits').doc('currentLimit').get();
-    if (!currentPeriodDoc.exists) {
-      console.error('No current spending period found!');
-      return;
-    }
-
-    const currentPeriod = currentPeriodDoc.data();
-    if (!currentPeriod) {
-      console.error('No data found for the spending period!');
+    // Get current user ID directly from Firebase Auth
+    const currentUser = auth().currentUser;
+    if (!currentUser) {
+      console.error('No authenticated user found!');
       return;
     }
 
     if (amount !== null) {
-      // Save the OCR data to Firestore with the fetched period
-      await firestore().collection('expenses').add({
-        amount: amount, // Store the formatted amount
-        source: 'Receipt', // OCR source
-        date: firestore.Timestamp.fromDate(new Date()),  // Firestore timestamp for the date
+      // Save the OCR data to Firestore with userId
+      const expenseRef = await firestore().collection('expenses').add({
+        amount: amount,
+        source: 'Receipt', 
+        date: firestore.Timestamp.fromDate(new Date()),
         category,
-        period: currentPeriod, // Add the current spending period
+        userId: currentUser.uid, 
       });
 
-      setTotalAmount(amount); // Update the total amount in the state
+      console.log('Receipt expense saved successfully to Firestore');
+      
+
+      
+      setTotalAmount(amount);
       setCurrency(currency);
       setCategory(category);
     }

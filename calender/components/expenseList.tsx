@@ -1,13 +1,12 @@
 import React from 'react';
 import { View, FlatList, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { COLORS } from '../../theme';
 
-// Define the props for the component, where expenses are of type any[]
 type Props = {
   expenses: any[]; // Expenses will be of type any[]
   onEdit: (expense: any) => void; // Accepting a general expense object
   onDelete: (expense: any) => void; // Accepting a general expense object
   onClose: () => void; // Add the onClose property to the Props type
-  
 };
 
 const ExpenseList: React.FC<Props> = ({ expenses, onEdit, onDelete }) => {
@@ -51,8 +50,11 @@ const styles = StyleSheet.create({
   item: {
     marginTop: 10,
     padding: 12,
-    borderRadius: 10,
-    backgroundColor: '#f0f0f0',
+    borderRadius: 15,
+    backgroundColor: 'rgb(243, 243, 243)',
+    elevation: 4,
+    minHeight: 120,
+    
   },
   actions: {
     flexDirection: 'row',
@@ -70,6 +72,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontStyle: 'italic',
   },
+  
 });
 
 export default ExpenseList;
