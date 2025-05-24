@@ -1,4 +1,3 @@
-// Fixed SmsParser.tsx - Ensures single storage per SMS
 import { useEffect, useState } from 'react';
 import { PermissionsAndroid, Alert, AppState, Platform } from 'react-native';
 import BackgroundService from 'react-native-background-actions';
@@ -7,21 +6,29 @@ import auth from '@react-native-firebase/auth';
 import { AppRegistry } from 'react-native';
 
 interface SmsParserProps {
-  onSmsReceived: (sms: string) => void;
-  onAmountExtracted: (amount: string) => void;
+  onSmsReceived: (sms: string, sender?: string) => void;
+  onAmountExtracted: (amount: string, sender?: string) => void;
   setTotalSpent?: React.Dispatch<React.SetStateAction<number>>;
 }
 
-// FIXED: Global processing lock to prevent concurrent processing
+
+interface SmsData {
+  body: string;
+  sender: string;
+  timestamp?: number;
+}
+
+
 let isProcessingSms = false;
 const processingMessages = new Set<string>();
 
-// ENHANCED: Atomic Firestore save with transaction
-const saveToFirestore = async (message: string, extractedAmount: string) => {
+//sender id
+const saveToFirestore = async (message: string, extractedAmount: string, sender: string = 'Unknown') => {
   try {
     console.log('=== FIRESTORE SAVE ATTEMPT START ===');
     console.log('Message length:', message.length);
     console.log('Extracted amount:', extractedAmount);
+    console.log('SMS Sender:', sender);
 
     // Check authentication status
     const currentUser = auth().currentUser;
@@ -30,7 +37,7 @@ const saveToFirestore = async (message: string, extractedAmount: string) => {
       throw new Error('User not authenticated');
     }
 
-    console.log('✅ User authenticated:', currentUser.uid);
+    console.log(' User authenticated:', currentUser.uid);
 
     // Validate and parse amount
     const amount = parseFloat(extractedAmount);
@@ -39,15 +46,15 @@ const saveToFirestore = async (message: string, extractedAmount: string) => {
       throw new Error('Invalid amount extracted');
     }
 
-    console.log('✅ Amount validated:', amount);
+    console.log(' Amount validated:', amount);
 
-    // Create message hash for duplicate prevention
-    const messageHash = hashMessage(message);
-    console.log('✅ Message hash created:', messageHash);
+    // Create message hash for duplicate prevention (include sender in hash)
+    const messageHash = hashMessage(message + sender);
+    console.log(' Message hash created:', messageHash);
 
     // Check if already processing this message
     if (processingMessages.has(messageHash)) {
-      console.log('⚠️ Message already being processed, skipping');
+      console.log(' Message already being processed, skipping');
       return null;
     }
 
@@ -58,7 +65,7 @@ const saveToFirestore = async (message: string, extractedAmount: string) => {
       const currentDate = new Date();
       const expenseData = {
         amount,
-        source: 'SMS',
+        source: `SMS - ${sender}`, // Enhanced source with sender ID
         date: firestore.Timestamp.fromDate(currentDate),
         category: 'SMS',
         userId: currentUser.uid,
@@ -66,12 +73,14 @@ const saveToFirestore = async (message: string, extractedAmount: string) => {
         messageHash: messageHash,
         createdAt: firestore.Timestamp.fromDate(currentDate),
         rawMessage: message.slice(0, 500),
+        smsSender: sender, // New field for SMS sender
+        senderCategory: categorizeSender(sender), // Categorize sender type
         appVersion: '1.0.0',
         platform: Platform.OS,
         processingTimestamp: Date.now(),
       };
 
-      console.log('💾 Attempting atomic save with transaction...');
+      console.log(' Attempting atomic save with transaction...');
 
       // First check for duplicates outside of transaction
       const duplicateCheck = await firestore()
@@ -82,7 +91,7 @@ const saveToFirestore = async (message: string, extractedAmount: string) => {
         .get();
 
       if (!duplicateCheck.empty) {
-        console.log('⚠️ Duplicate message found, skipping save');
+        console.log('Duplicate message found, skipping save');
         throw new Error('DUPLICATE_MESSAGE');
       }
 
@@ -96,13 +105,13 @@ const saveToFirestore = async (message: string, extractedAmount: string) => {
         return newDocRef.id;
       });
 
-      console.log('✅ Document saved successfully with transaction, ID:', result);
+      console.log('Document saved successfully with transaction, ID:', result);
       console.log('=== FIRESTORE SAVE ATTEMPT END ===');
       return result;
 
     } catch (transactionError: any) {
       if (transactionError.message === 'DUPLICATE_MESSAGE') {
-        console.log('⚠️ Duplicate message detected in transaction');
+        console.log(' Duplicate message detected in transaction');
         return null;
       }
       throw transactionError;
@@ -115,29 +124,60 @@ const saveToFirestore = async (message: string, extractedAmount: string) => {
     console.error('Error type:', error.constructor.name);
     console.error('Error message:', error.message);
     console.error('=== FIRESTORE SAVE ERROR END ===');
-    processingMessages.delete(hashMessage(message));
+    processingMessages.delete(hashMessage(message + sender));
     throw error;
   }
 };
 
-// Enhanced background task with single processing
+// New function to categorize SMS senders
+const categorizeSender = (sender: string): string => {
+  const bankPatterns = [
+    /HDFC/i, /ICICI/i, /SBI/i, /AXIS/i, /KOTAK/i, /PNB/i, /BOB/i, /CANARA/i,
+    /UNION/i, /INDIAN/i, /CENTRAL/i, /SYNDICATE/i, /ALLAHABAD/i, /ANDHRA/i,
+    /BANK/i, /PAYTM/i, /GPAY/i, /PHONEPE/i, /AMAZON/i, /FLIPKART/i
+  ];
+  
+  const creditCardPatterns = [
+    /CREDIT/i, /CARD/i, /CC/i, /VISA/i, /MASTER/i, /AMEX/i, /RUPAY/i
+  ];
+  
+  const upiPatterns = [
+    /UPI/i, /PAYTM/i, /GPAY/i, /PHONEPE/i, /BHIM/i, /AMAZONPAY/i
+  ];
+
+  for (const pattern of bankPatterns) {
+    if (pattern.test(sender)) return 'Bank';
+  }
+  
+  for (const pattern of creditCardPatterns) {
+    if (pattern.test(sender)) return 'Credit Card';
+  }
+  
+  for (const pattern of upiPatterns) {
+    if (pattern.test(sender)) return 'UPI/Wallet';
+  }
+  
+  return 'Other';
+};
+
+// Enhanced background task with sender information
 const backgroundSmsTask = async (taskData: any) => {
   console.log('🔧 Background SMS task started:', taskData);
 
   if (!taskData || !taskData.message) {
-    console.log('⚠️ No valid message data in background task');
+    console.log(' No valid message data in background task');
     return;
   }
 
-  const { body } = taskData.message;
+  const { body, sender } = taskData.message;
   if (!body) {
-    console.log('⚠️ No message body in background task');
+    console.log(' No message body in background task');
     return;
   }
 
   // FIXED: Check processing lock in background task too
   if (isProcessingSms) {
-    console.log('⚠️ SMS already being processed, skipping background task');
+    console.log('SMS already being processed, skipping background task');
     return;
   }
 
@@ -150,18 +190,18 @@ const backgroundSmsTask = async (taskData: any) => {
 
     const extractedAmount = extractAmountFromSMS(body);
     if (extractedAmount) {
-      console.log('✅ Background task extracted amount:', extractedAmount);
-      const docId = await saveToFirestore(body, extractedAmount);
+      console.log('Background task extracted amount:', extractedAmount, 'from sender:', sender);
+      const docId = await saveToFirestore(body, extractedAmount, sender || 'Unknown');
       if (docId) {
-        console.log('✅ Background SMS processing completed, document ID:', docId);
+        console.log(' Background SMS processing completed, document ID:', docId);
       } else {
-        console.log('⚠️ Background SMS processing completed but no document ID returned (likely duplicate)');
+        console.log('Background SMS processing completed but no document ID returned (likely duplicate)');
       }
     } else {
-      console.log('ℹ️ No amount found in background SMS:', body.substring(0, 50));
+      console.log(' No amount found in background SMS from', sender, ':', body.substring(0, 50));
     }
   } catch (error) {
-    console.error('❌ Error in background SMS task:', error);
+    console.error('Error in background SMS task:', error);
   }
 };
 
@@ -171,8 +211,7 @@ const extractAmountFromSMS = (text: string): string | null => {
   
   const patterns = [
     /Rs\.?\s?(\d+(?:,\d{3})*(?:\.\d{1,2})?)/i,
-    /INR\s?(\d+(?:,\d{3})*(?:\.\d{1,2})?)/i,
-    /₹\s?(\d+(?:,\d{3})*(?:\.\d{1,2})?)/i,
+    
     /amount\s*[:\-]?\s*Rs\.?\s?(\d+(?:,\d{3})*(?:\.\d{1,2})?)/i,
     /debited\s*[:\-]?\s*Rs\.?\s?(\d+(?:,\d{3})*(?:\.\d{1,2})?)/i,
     /spent\s*[:\-]?\s*Rs\.?\s?(\d+(?:,\d{3})*(?:\.\d{1,2})?)/i,
@@ -185,20 +224,20 @@ const extractAmountFromSMS = (text: string): string | null => {
     const match = text.match(pattern);
     if (match && match[1]) {
       const cleanAmount = match[1].replace(/,/g, '');
-      console.log('✅ Amount extracted using pattern:', pattern.toString(), 'Result:', cleanAmount);
+      console.log('Amount extracted using pattern:', pattern.toString(), 'Result:', cleanAmount);
       return cleanAmount;
     }
   }
 
-  console.log('⚠️ No amount pattern matched in SMS');
+  console.log(' No amount pattern matched in SMS');
   return null;
 };
 
-// Improved hash function with timestamp window
-const hashMessage = (message: string): string => {
+// Improved hash function with timestamp window and sender
+const hashMessage = (messageWithSender: string): string => {
   // Include 5-minute time window to handle rapid duplicates
   const timeWindow = Math.floor(Date.now() / (5 * 60 * 1000));
-  const content = message + timeWindow.toString();
+  const content = messageWithSender + timeWindow.toString();
   
   let hash = 0;
   for (let i = 0; i < content.length; i++) {
@@ -244,15 +283,15 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
       const allGranted = results.every(result => result === PermissionsAndroid.RESULTS.GRANTED);
       
       if (allGranted) {
-        console.log('✅ All SMS permissions granted');
+        console.log('All SMS permissions granted');
         return true;
       } else {
-        console.log('❌ Some SMS permissions denied');
+        console.log('Some SMS permissions denied');
         Alert.alert('Permission Denied', 'You need to allow all permissions for this feature to work.');
         return false;
       }
     } catch (err) {
-      console.warn('❌ Error requesting SMS permissions:', err);
+      console.warn('Error requesting SMS permissions:', err);
       return false;
     }
   };
@@ -294,17 +333,17 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
     try {
       // FIXED: Always stop existing service first
       if (await BackgroundService.isRunning()) {
-        console.log('🛑 Stopping existing background service...');
+        console.log(' Stopping existing background service');
         await BackgroundService.stop();
         await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for clean shutdown
       }
 
-      console.log('🚀 Starting fresh background service for SMS monitoring');
+      console.log('Starting fresh background service for SMS monitoring');
       await BackgroundService.start(backgroundTask, backgroundServiceOptions);
-      console.log('✅ Background service started successfully');
+      console.log('Background service started successfully');
       
     } catch (error) {
-      console.error('❌ Failed to start background service:', error);
+      console.error('Failed to start background service:', error);
     }
   };
 
@@ -312,70 +351,73 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
     try {
       if (await BackgroundService.isRunning()) {
         await BackgroundService.stop();
-        console.log('🛑 Background service stopped');
+        console.log(' Background service stopped');
       }
     } catch (error) {
-      console.error('❌ Failed to stop background service:', error);
+      console.error('Failed to stop background service:', error);
     }
   };
 
   const handleAppStateChange = (nextAppState: string) => {
-    console.log('📱 App state changing from', appState, 'to', nextAppState);
+    console.log(' App state changing from', appState, 'to', nextAppState);
     
     if (appState.match(/active|foreground/) && nextAppState.match(/inactive|background/)) {
-      console.log('📱 App going to background, ensuring background service is running');
+      console.log('App going to background, ensuring background service is running');
       startBackgroundService();
     }
     
     setAppState(nextAppState as typeof AppState.currentState);
   };
 
-  // FIXED: Single SMS processing function with comprehensive locking
-  const processSmsMessage = async (messageBody: string, source: string = 'foreground') => {
+  // ENHANCED: Single SMS processing function with sender information
+  const processSmsMessage = async (smsData: SmsData, source: string = 'foreground') => {
+    const { body: messageBody, sender } = smsData;
+    
     // CRITICAL: Global processing lock
     if (isProcessingSms) {
-      console.log(`⚠️ Already processing an SMS, skipping ${source} message`);
+      console.log(` Already processing an SMS, skipping ${source} message from ${sender}`);
       return;
     }
 
-    const messageHash = hashMessage(messageBody);
+    const messageHash = hashMessage(messageBody + sender);
     if (processingMessages.has(messageHash)) {
-      console.log(`⚠️ Message with hash ${messageHash} already being processed, skipping ${source}`);
+      console.log(` Message with hash ${messageHash} already being processed, skipping ${source} from ${sender}`);
       return;
     }
 
     isProcessingSms = true;
 
     try {
-      console.log(`📨 Processing SMS from ${source}:`, messageBody.substring(0, 100));
+      console.log(` Processing SMS from ${source} | Sender: ${sender} | Message:`, messageBody.substring(0, 100));
       
       // Check if user is authenticated
       if (!currentUser) {
-        console.error('❌ Cannot process SMS: No authenticated user');
+        console.error('Cannot process SMS: No authenticated user');
         return;
       }
       
-      onSmsReceived(messageBody);
+      // Call callbacks with sender information
+      onSmsReceived(messageBody, sender);
       
       const extractedAmount = extractAmountFromSMS(messageBody);
       
       if (extractedAmount) {
-        console.log(`💰 Amount extracted from ${source} SMS:`, extractedAmount);
+        console.log(` Amount extracted from ${source} SMS (${sender}):`, extractedAmount);
         
-        // Call the callback first
-        onAmountExtracted(extractedAmount);
+        // Call the callback with sender information
+        onAmountExtracted(extractedAmount, sender);
         
         // Save to Firestore with comprehensive error handling
         try {
-          const docId = await saveToFirestore(messageBody, extractedAmount);
+          const docId = await saveToFirestore(messageBody, extractedAmount, sender);
           
           if (docId) {
-            console.log(`✅ ${source} SMS processing completed successfully, document ID:`, docId);
+            console.log(` ${source} SMS processing completed successfully, document ID:`, docId);
           } else {
-            console.log(`⚠️ ${source} SMS processing completed but no document ID returned (likely duplicate)`);
+            console.log(` ${source} SMS processing completed but no document ID returned (likely duplicate)`);
           }
         } catch (saveError) {
-          console.error(`❌ Failed to save ${source} SMS to Firestore:`, saveError);
+          console.error(` Failed to save ${source} SMS to Firestore:`, saveError);
           
           Alert.alert(
             'Save Error',
@@ -384,10 +426,10 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
           );
         }
       } else {
-        console.log(`ℹ️ No amount found in ${source} SMS:`, messageBody.substring(0, 50));
+        console.log(`No amount found in ${source} SMS from ${sender}:`, messageBody.substring(0, 50));
       }
     } catch (error) {
-      console.error(`❌ Error processing ${source} SMS:`, error);
+      console.error(` Error processing ${source} SMS from ${sender}:`, error);
     } finally {
       // CRITICAL: Always release the lock
       isProcessingSms = false;
@@ -395,7 +437,7 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
   };
 
   useEffect(() => {
-    console.log('🔧 SmsParser component initializing...');
+    console.log(' SmsParser component initializing...');
     
     // Request necessary permissions
     requestSMSPermission();
@@ -406,7 +448,7 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
     // Set up app state change handler
     const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
 
-    // FIXED: Use ONLY DeviceEventEmitter - removed duplicate native module listener
+    // ENHANCED: SMS event listener with sender information
     const eventEmitter = Platform.select({
       android: require('react-native').DeviceEventEmitter,
       default: null
@@ -415,29 +457,35 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
     let eventSubscription: any = null;
     
     if (eventEmitter) {
-      console.log('📱 Setting up SINGLE SMS event listener...');
+      console.log('📡 Setting up ENHANCED SMS event listener with sender tracking...');
       
       eventSubscription = eventEmitter.addListener('sms_received', (event: any) => {
-        console.log('📨 Received SMS event from DeviceEventEmitter:', {
-          sender: event?.sender,
+        console.log(' Received SMS event from DeviceEventEmitter:', {
+          sender: event?.sender || 'Unknown',
           bodyLength: event?.body?.length || 0,
           timestamp: new Date().toISOString()
         });
         
         if (event && event.body) {
-          processSmsMessage(event.body, 'DeviceEventEmitter');
+          const smsData: SmsData = {
+            body: event.body,
+            sender: event.sender || 'Unknown',
+            timestamp: event.timestamp || Date.now()
+          };
+          
+          processSmsMessage(smsData, 'DeviceEventEmitter');
         } else {
-          console.log('⚠️ Invalid SMS event received:', event);
+          console.log(' Invalid SMS event received:', event);
         }
       });
       
-      console.log('✅ Single SMS event listener set up successfully');
+      console.log('Enhanced SMS event listener set up successfully');
     } else {
-      console.log('⚠️ EventEmitter not available on this platform');
+      console.log(' EventEmitter not available on this platform');
     }
 
     // Start background service for when app is not active
-    console.log('🚀 Starting background service on component mount...');
+    console.log('🔧 Starting background service on component mount...');
     startBackgroundService();
 
     // Background service health check
@@ -445,11 +493,11 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
       try {
         const isRunning = await BackgroundService.isRunning();
         if (!isRunning && appState.match(/inactive|background/)) {
-          console.log('⚠️ Background service stopped unexpectedly, restarting...');
+          console.log(' Background service stopped unexpectedly, restarting...');
           await startBackgroundService();
         }
       } catch (error) {
-        console.error('❌ Error checking background service status:', error);
+        console.error(' Error checking background service status:', error);
       }
     }, 30000);
 
@@ -461,11 +509,11 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
 
     // Clean up when component unmounts
     return () => {
-      console.log('🔧 SmsParser component unmounting, cleaning up...');
+      console.log(' SmsParser component unmounting, cleaning up...');
       
       if (eventSubscription) {
         eventSubscription.remove();
-        console.log('✅ SMS event listener removed');
+        console.log(' SMS event listener removed');
       }
       
       appStateSubscription.remove();
@@ -478,7 +526,7 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
       isProcessingSms = false;
       processingMessages.clear();
       
-      console.log('✅ SmsParser cleanup completed');
+      console.log('SmsParser cleanup completed');
     };
   }, [onSmsReceived, onAmountExtracted]);
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, Platform, TouchableOpacity, View, StyleSheet } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { COLORS } from '../../theme';
 
 type Props = {
   selectedDate: Date;
@@ -23,9 +24,11 @@ const DatePickerHeader: React.FC<Props> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.dateinfoContainer}>
+      <Text style={styles.selectText}>Select Date:</Text>
       <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-        <Text style={styles.selectText}>📅 Select Date:</Text>
+        
+        <Text style={styles.selectText2}>📅</Text>
       </TouchableOpacity>
       <Text style={styles.dateText}>{selectedDate.toDateString()}</Text>
 
@@ -49,11 +52,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#007AFF',
   },
+  selectText2: {
+    fontSize: 20, 
+    marginLeft: 100,
+    marginTop: -25,
+  },
   dateText: {
     fontSize: 16,
     color: '#333',
     marginTop: 4,
   },
+
+  dateinfoContainer: {
+    marginTop: 5,
+    marginHorizontal: 8,
+    marginBottom: 16,
+    padding: 15,
+    backgroundColor: COLORS.white || 'rgba(138, 79, 255, 0.61)',
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+
+  
 });
 
 export default DatePickerHeader;

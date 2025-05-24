@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Platform, StatusBar, StyleSheet, Text } from 'react-native';
-import firestore from '@react-native-firebase/firestore'; // Import Firestore
-import auth from '@react-native-firebase/auth'; // Import Firebase auth
+import firestore from '@react-native-firebase/firestore'; 
+import auth from '@react-native-firebase/auth'; 
 import CalendarHeader from './components/calenderHeader'; 
 import DatePickerHeader from './components/datePickerHeader';
 import ExpenseList from './components/expenseList';
 import DeleteModal from './components/deleteModal';
 import EditExpenseModal from './components/editExpenseModal'; 
+import { COLORS } from '../theme';
 
 const CalendarScreen = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -27,11 +28,11 @@ const CalendarScreen = () => {
         // Fetch expenses from Firestore, filtered by userId
         const expenseSnapshot = await firestore()
           .collection('expenses')
-          .where('userId', '==', currentUser.uid) // Filter by userId
+          .where('userId', '==', currentUser.uid) 
           .get();
 
         const expenseData = expenseSnapshot.docs.map(doc => ({
-          id: doc.id, // Use Firestore's doc.id as the unique document ID
+          id: doc.id, 
           ...doc.data(),
         }));
 
@@ -77,11 +78,11 @@ const CalendarScreen = () => {
   const handleDelete = async () => {
     if (selectedExpense) {
       try {
-        // Delete expense from Firestore using Firestore's document ID (doc.id)
+       
         await firestore().collection('expenses').doc(selectedExpense.id).delete(); // Use `id` which is the Firestore document ID
-        setFilteredExpenses(filteredExpenses.filter((expense: any) => expense.id !== selectedExpense.id)); // Update the state by filtering out the deleted expense
-        setShowDeleteModal(false); // Close the delete modal
-        setSelectedExpense(null); // Reset selected expense
+        setFilteredExpenses(filteredExpenses.filter((expense: any) => expense.id !== selectedExpense.id)); 
+        setShowDeleteModal(false); 
+        setSelectedExpense(null); 
       } catch (error) {
         console.error('Error deleting expense from Firestore:', error);
       }
@@ -121,12 +122,12 @@ const CalendarScreen = () => {
 
         {showDeleteModal && selectedExpense && (
           <DeleteModal
-            expenseId={selectedExpense.id} // Pass Firestore document ID (id) to the DeleteModal
+            expenseId={selectedExpense.id} 
             onCancel={() => {
               setShowDeleteModal(false);
               setSelectedExpense(null);
             }}
-            onDelete={handleDelete} // Trigger handleDelete function when confirmed
+            onDelete={handleDelete} 
           />
         )}
 
@@ -138,7 +139,7 @@ const CalendarScreen = () => {
               setSelectedExpense(null);
             }}
             onEdit={() => {}}
-            onDelete={() => {}}
+           
           />
         )}
       </View>
@@ -149,12 +150,13 @@ const CalendarScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    paddingTop:15,
     backgroundColor: '#fff',
   },
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: COLORS.background,
   },
   totalText: {
     fontSize: 18,

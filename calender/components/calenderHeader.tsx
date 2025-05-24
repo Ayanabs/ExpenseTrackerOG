@@ -11,8 +11,8 @@ const CalenderHeader = () => {
     <SafeAreaView style={styles.safeArea}>
       {/* Status bar customization */}
       <StatusBar
-        barStyle="dark-content" // or "light-content" if you use a dark background
-        backgroundColor={COLORS.background} // match your app background color
+        barStyle="dark-content" 
+        backgroundColor={COLORS.background}
       />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -22,7 +22,7 @@ const CalenderHeader = () => {
         <Text style={styles.title}>Calendar</Text>
 
         <TouchableOpacity>
-          <Icon name="account-circle" size={24} color={COLORS.primary} />
+         
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -36,10 +36,11 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 0,
     backgroundColor: '#fff',
     height: 50,
   },

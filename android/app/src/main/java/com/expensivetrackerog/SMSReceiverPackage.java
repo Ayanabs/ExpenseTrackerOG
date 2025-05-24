@@ -1,5 +1,3 @@
-// SMSReceiverPackage.java
-// Path: android/app/src/main/java/com/your_package_name/SMSReceiverPackage.java
 
 package com.expensivetrackerog;
 

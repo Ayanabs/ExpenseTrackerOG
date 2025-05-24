@@ -104,7 +104,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose, onLogin }) =>
           
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
           
-          <Text style={styles.inputLabel}>Username/Email</Text>
+          <Text style={styles.inputLabel}>Email</Text>
           <TextInput
             style={styles.input}
             placeholder="Enter your email"

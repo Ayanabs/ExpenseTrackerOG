@@ -13,7 +13,7 @@ const SettingsHeader = () => {
               <Icon name="arrow-left" size={24} color={COLORS.white} />
             </TouchableOpacity>
     <Text style={styles.title}>Settings</Text> 
-    <View style={{ width: 24 }} /> {/* Spacer for symmetry */} 
+    <View style={{ width: 24 }} />  
   </View> 
   );
 }; 

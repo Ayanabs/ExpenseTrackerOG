@@ -21,7 +21,7 @@ const processImage = async (
       uri,
       name: filename,
       type: `image/${fileType}`,
-    } as any); // React Native types workaround
+    } as any); 
 
     const response = await fetch('https://93743526-851e-40d0-ab2f-57ee5aeeb6b3-00-3rife4kkxru97.pike.replit.dev/ocr', {
       method: 'POST',
@@ -55,7 +55,7 @@ const processImage = async (
         source: 'Receipt', 
         date: firestore.Timestamp.fromDate(new Date()),
         category,
-        userId: currentUser.uid, // Add userId for proper filtering
+        userId: currentUser.uid, 
       });
 
       console.log('Receipt expense saved successfully to Firestore');

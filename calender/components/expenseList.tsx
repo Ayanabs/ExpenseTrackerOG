@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, FlatList, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { COLORS } from '../../theme';
 
 type Props = {
   expenses: any[]; // Expenses will be of type any[]
@@ -49,8 +50,11 @@ const styles = StyleSheet.create({
   item: {
     marginTop: 10,
     padding: 12,
-    borderRadius: 10,
-    backgroundColor: '#f0f0f0',
+    borderRadius: 15,
+    backgroundColor: 'rgb(243, 243, 243)',
+    elevation: 4,
+    minHeight: 120,
+    
   },
   actions: {
     flexDirection: 'row',
@@ -68,6 +72,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontStyle: 'italic',
   },
+  
 });
 
 export default ExpenseList;

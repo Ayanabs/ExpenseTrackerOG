@@ -5,6 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppContext } from '../App';
 import { checkAndNotify } from './spendingalertservice';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { COLORS } from '../theme';
 
 interface AlertScreenProps {
   navigation: NativeStackNavigationProp<any>;
@@ -105,7 +107,7 @@ const AlertScreen: React.FC<AlertScreenProps> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>←</Text>
+           <Icon name="arrow-left" size={24} color={COLORS.black} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Alerts</Text>
         <TouchableOpacity onPress={loadAlerts} style={styles.refreshButton}>

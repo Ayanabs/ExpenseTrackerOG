@@ -119,7 +119,7 @@ const IncomeOutcomeChart = ({ selectedMonth }: { selectedMonth: number }) => {
       <View style={styles.totalContainer}>
         <Text style={styles.totalText}>Selected Month Expenses: Rs. {selectedMonthExpenses}</Text>
         <Text style={[styles.totalText, { color: savings >= 0 ? 'green' : 'red' }]}>
-          {savings >= 0 ? `Savings` : `Loss`}: Rs. {Math.abs(savings)}
+          {savings >= 0 ? `Savings` : `Loss`}: Rs. {Math.abs(savings).toFixed(2)}
         </Text>
       </View>
     </View>
@@ -128,9 +128,16 @@ const IncomeOutcomeChart = ({ selectedMonth }: { selectedMonth: number }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
+    marginHorizontal: 10,
+    padding: 1,
     marginVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#FFF',
+    elevation: 2,
+    minHeight: 120,
   },
+  
+  
   chart: {
     height: 250,
     width: screenWidth - 32,

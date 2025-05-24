@@ -15,7 +15,7 @@ const AnalyticsHeader = () => {
         </TouchableOpacity>
         <Text style={styles.title}>Analytics</Text>
         <TouchableOpacity>
-          <Icon name="account-circle" size={26} color={COLORS.primary} />
+         
         </TouchableOpacity>
       </View>
     </SafeAreaView>

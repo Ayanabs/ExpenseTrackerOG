@@ -39,9 +39,9 @@ export default function AddLimitModal({ onLimitSet }: { onLimitSet: (data: { lim
               <Text style={styles.modalTitle}>Set Spending Limit</Text>
               
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Total Budget (Rs)</Text>
+                <Text style={styles.inputLabel}>Total Budget (LKR)</Text>
                 <View style={styles.inputWrapper}>
-                  <Icon name="currency-inr" size={20} color={COLORS.primary} style={styles.inputIcon}/>
+                  <Text style={styles.currencyText}>Rs</Text>
                   <TextInput
                     style={styles.input}
                     placeholder="10000"
@@ -182,6 +182,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   inputIcon: {
+    paddingHorizontal: 12,
+  },
+  currencyText: {
+    color: COLORS.primary,
+    fontSize: 16,
+    fontWeight: 'bold',
     paddingHorizontal: 12,
   },
   input: {

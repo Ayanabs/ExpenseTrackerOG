@@ -7,6 +7,7 @@ import MonthlyBudgetCard from '../analytics/components/monthlybudgetcard'; // Im
 import CategoriesContainer from '../homepage/components/categorylist'; 
 import { fetchCategoriesWithExpenses } from '../homepage/components/categoryservice'; 
 import { getFirestore } from '@react-native-firebase/firestore'; // Import firestore to get the total spent
+import { COLORS } from '../theme';
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -56,7 +57,7 @@ const AnalyticsScreen = () => {
 
   return ( 
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={{ backgroundColor: '#FAFAFA' }}> 
+      <ScrollView style={{ backgroundColor: COLORS.background }}> 
         <AnalyticsHeader /> 
         <MonthSelector selectedMonth={selectedMonth} onMonthSelect={handleMonthSelect} /> 
         <IncomeOutcomeChart selectedMonth={selectedMonth} /> {/* Pass selectedMonth to IncomeOutcomeChart */}
