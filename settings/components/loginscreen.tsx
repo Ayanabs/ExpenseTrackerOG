@@ -48,7 +48,7 @@ const LoginScreen = ({ navigation, onLogin }: { navigation: any, onLogin: () => 
             routes: [{ name: 'Homepage' }],
           });
           
-          // Then call onLogin to update app state
+         
           onLogin();
         }, 500);
       }
@@ -67,7 +67,7 @@ const LoginScreen = ({ navigation, onLogin }: { navigation: any, onLogin: () => 
     try {
       await loginWithGoogle();
       
-      // Call refreshData to update app state
+    
       refreshData();
       
       // Brief timeout to ensure data is loaded
@@ -75,13 +75,13 @@ const LoginScreen = ({ navigation, onLogin }: { navigation: any, onLogin: () => 
         setIsLoading(false);
         setLoginModalVisible(false);
         
-        // Navigate to Homepage
+       
         navigation.reset({
           index: 0,
           routes: [{ name: 'Homepage' }],
         });
         
-        // Then call onLogin to update app state
+        
         onLogin();
       }, 500);
       
@@ -105,9 +105,9 @@ const LoginScreen = ({ navigation, onLogin }: { navigation: any, onLogin: () => 
       const user = await registerUser(email, password, name, phone);
       
       setIsLoading(false);
-      // Show success message
+     
       Alert.alert('Success', 'Registration successful! You can now login.');
-      // After successful registration, show the login modal
+      
       setRegisterModalVisible(false);
       setLoginModalVisible(true);
       return Promise.resolve();

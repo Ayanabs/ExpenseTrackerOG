@@ -132,9 +132,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingBottom: 6, // Removed paddingTop and moved it dynamically
-    backgroundColor: 'transparent', // Set header background to transparent
-    position: 'relative', // Needed to make the dropdown overlay work
+    paddingBottom: 6, 
+    backgroundColor: 'transparent', 
+    position: 'relative', 
   },
   iconButton: {
     padding: 4,
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   rightIconContainer: {
     flexDirection: 'column',
-    backgroundColor: 'rgba(66, 66, 66, 0.11)', // Optional, or you can remove this as well if not needed
+    backgroundColor: 'rgba(66, 66, 66, 0.11)', 
     borderBottomEndRadius: 15,
     borderBottomStartRadius: 15,
     padding: 2,
@@ -152,10 +152,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dropdownMenu: {
-    position: 'absolute', // Position the dropdown absolutely
-    left: '50%', // Center it horizontally
-    transform: [{ translateX: -165 }], // Offset by half of the width to align the dropdown in the center
-    zIndex: 1000, // Ensure the dropdown stays above other content
+    position: 'absolute', 
+    left: '50%', 
+    transform: [{ translateX: -165 }],
+    zIndex: 1000, 
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   menuText: {
     color: COLORS.black,
     fontSize: 15,
-    marginLeft: 8, // Add some space between the icon and text
+    marginLeft: 8, 
   },
 });
 

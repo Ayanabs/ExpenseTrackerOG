@@ -102,7 +102,7 @@ const CategoriesContainer: React.FC<ExpenseCategoriesContainerProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Chevron button to toggle expansion */}
+    
       <TouchableOpacity 
         style={styles.chevronContainer} 
         onPress={toggleExpansion}
@@ -122,10 +122,10 @@ const CategoriesContainer: React.FC<ExpenseCategoriesContainerProps> = ({
               const percentage = Math.min(100, (category.spent / category.limit) * 100);
               const isOverLimit = category.spent > category.limit;
               
-              // Determine progress bar color based on percentage
+             
               const getProgressColor = () => {
                 if (isOverLimit) return COLORS.danger;
-                if (percentage > 80) return '#FFA500'; // Orange for warning
+                if (percentage > 80) return '#FFA500'; 
                 return category.color;
               };
 
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   
     marginBottom: 8,
-    backgroundColor: '#1E1E1E', // Slightly lighter than background for card
+    backgroundColor: '#1E1E1E', 
     borderRadius: 8,
   },
   leftSection: {

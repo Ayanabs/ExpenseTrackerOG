@@ -18,14 +18,14 @@ const CalendarScreen = () => {
   const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  // Fetch expenses and current spending limit from Firestore
+  // Fetch expenses and current spending limit from db
   useEffect(() => {
     const fetchData = async () => {
       try {
         const currentUser = auth().currentUser;
         if (!currentUser) return;
 
-        // Fetch expenses from Firestore, filtered by userId
+        // Fetch expenses from db, filtered by userId
         const expenseSnapshot = await firestore()
           .collection('expenses')
           .where('userId', '==', currentUser.uid) 
@@ -43,7 +43,7 @@ const CalendarScreen = () => {
         endOfDay.setDate(endOfDay.getDate() + 1);
 
         const filtered = expenseData.filter((expense: any) => {
-          const expenseDate = new Date(expense.date.seconds * 1000); // Convert Firestore timestamp to JS Date
+          const expenseDate = new Date(expense.date.seconds * 1000); 
           return expenseDate >= startOfDay && expenseDate < endOfDay;
         });
 
@@ -79,7 +79,7 @@ const CalendarScreen = () => {
     if (selectedExpense) {
       try {
        
-        await firestore().collection('expenses').doc(selectedExpense.id).delete(); // Use `id` which is the Firestore document ID
+        await firestore().collection('expenses').doc(selectedExpense.id).delete(); 
         setFilteredExpenses(filteredExpenses.filter((expense: any) => expense.id !== selectedExpense.id)); 
         setShowDeleteModal(false); 
         setSelectedExpense(null); 

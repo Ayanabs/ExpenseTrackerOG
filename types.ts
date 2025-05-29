@@ -2,8 +2,8 @@
 export type RootStackParamList = {
   Homepage: undefined;
   Analytics: undefined;
-  Settings: undefined; // Type for Settings screen
+  Settings: undefined; 
   MonthTab: undefined;
-  Login: { onLogin: () => void }; // Type for Login screen
-  Alerts: undefined; // Type for Alerts screen
+  Login: { onLogin: () => void }; 
+  Alerts: undefined; 
 };

@@ -16,7 +16,7 @@ const SettingsScreen = ({ onLogout }: { onLogout: () => void }) => {
           <ProfileAvatar />
           <ProfileFields />
           <AlertsToggle />
-          <LogoutButton onLogout={onLogout} />  {/* Trigger logout */}
+          <LogoutButton onLogout={onLogout} />
         </View>
       </ScrollView>
     </View>

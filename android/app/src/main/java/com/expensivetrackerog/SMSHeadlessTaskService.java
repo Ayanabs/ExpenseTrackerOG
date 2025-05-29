@@ -35,7 +35,7 @@ public class SMSHeadlessTaskService extends HeadlessJsTaskService {
         
         // Acquire wake lock to ensure the task starts
         if (!wakeLock.isHeld()) {
-            wakeLock.acquire(120000); // Hold wake lock for max 2 minutes
+            wakeLock.acquire(120000); 
         }
         
         intent.setClass(context, SMSHeadlessTaskService.class);
@@ -52,7 +52,7 @@ public class SMSHeadlessTaskService extends HeadlessJsTaskService {
             Log.d(TAG, "Successfully started SMSHeadlessTaskService");
         } catch (Exception e) {
             Log.e(TAG, "Error starting service: " + e.getMessage());
-            // Release wake lock if service failed to start
+            
             if (wakeLock != null && wakeLock.isHeld()) {
                 wakeLock.release();
             }
@@ -87,10 +87,10 @@ public class SMSHeadlessTaskService extends HeadlessJsTaskService {
         
         // Create and return the headless task config with extended timeout
         return new HeadlessJsTaskConfig(
-                "BACKGROUND_SMS_TASK",  // Matching the task name in JS
+                "BACKGROUND_SMS_TASK",  
                 Arguments.fromBundle(message),
-                120000,  // Increased timeout to 2 minutes
-                true     // Allow the task to run in foreground
+                120000,  
+                true     
         );
     }
     

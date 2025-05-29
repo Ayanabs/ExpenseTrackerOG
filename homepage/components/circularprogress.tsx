@@ -1,14 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
-import { Svg, Circle, Line } from 'react-native-svg'; // Import the Line component
+import { Svg, Circle, Line } from 'react-native-svg'; 
 import { COLORS } from '../../theme';
 
-// Create an animated Circle component
+
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 interface Props {
   totalSpent?: number;
-  maxtotal?: number; // Add maxtotal as a prop
+  maxtotal?: number; 
   label?: string;
   percentage?: number;
 }
@@ -36,7 +36,7 @@ const CircleProgress: React.FC<Props> = ({ totalSpent, label, maxtotal }) => {
       toValue: percentage,
       duration: 1000,
       easing: Easing.out(Easing.ease),
-      useNativeDriver: false, // required for SVG animations
+      useNativeDriver: false, 
     }).start();
   }, [percentage]);
 
@@ -89,7 +89,7 @@ const CircleProgress: React.FC<Props> = ({ totalSpent, label, maxtotal }) => {
             y2="162"
             stroke={COLORS.primary}
             strokeWidth="1.5"
-            strokeDasharray="5,5" // Optional: dashed line
+            strokeDasharray="5,5" 
           />
         )}
       </Svg>
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   },
   marginTop: {
     marginBottom: -3,
-    marginTop: 3, // Add space between the totalSpent and maxtotal
+    marginTop: 3, 
   },
 });
 

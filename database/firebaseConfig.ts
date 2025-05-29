@@ -7,7 +7,7 @@ export const fetchSpendingLimit = async () => {
 
     if (!currentUser) {
       console.log('No authenticated user found, using default spending limit');
-      // Return default limit for non-authenticated users
+      
       return 0;
     }
 
@@ -45,7 +45,7 @@ export const setSpendingLimit = async (totalLimit: number, days: number, hours: 
       limit: totalLimit,
       startDate: startDate,
       endDate: endDate,
-      userId: currentUser.uid, // Explicitly store the userId for extra security
+      userId: currentUser.uid, 
     });
 
     console.log('Limit set successfully in Firestore for user:', currentUser.uid);
@@ -62,7 +62,7 @@ export const fetchExpenses = async () => {
     const currentUser = auth().currentUser;
     if (!currentUser) {
       console.error('No authenticated user found.');
-      return [];  // Return an empty array if no user is authenticated
+      return [];  
     }
     
     const expensesRef = firestore().collection('expenses');
@@ -77,7 +77,7 @@ export const fetchExpenses = async () => {
     return expenses;
   } catch (error) {
     console.error('Error fetching expenses:', error);
-    return [];  // Return an empty array if there is an error
+    return [];  
   }
 };
 
@@ -87,15 +87,15 @@ export const addExpense = async (amount: number, category: string) => {
     const currentUser = auth().currentUser;
     if (!currentUser) {
       console.error('No authenticated user found.');
-      return;  // Don't proceed if no user is authenticated
+      return;  
     }
 
     const docRef = await firestore().collection('expenses').add({
       amount: amount,
       category: category,
-      date: new Date().toISOString(),  // Use ISO format for consistency
-      source: 'OCR Receipt',  // Assuming source is always 'OCR Receipt'
-      userId: currentUser.uid,  // Associate expense with authenticated user
+      date: new Date().toISOString(),  
+      source: 'OCR Receipt', 
+      userId: currentUser.uid,  
     });
     console.log('Document written with ID: ', docRef.id);
     return docRef.id;

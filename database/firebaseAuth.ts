@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 // Configure Google Sign-In
 export const configureGoogleSignIn = () => {
   GoogleSignin.configure({
-    webClientId: '185367301858-vf9cp08me2m3ge07glujjp1hqp9m483p.apps.googleusercontent.com', // Get this from Firebase console
+    webClientId: '185367301858-vf9cp08me2m3ge07glujjp1hqp9m483p.apps.googleusercontent.com', 
     offlineAccess: true,
   });
 };
@@ -14,7 +14,7 @@ export const configureGoogleSignIn = () => {
 // Register User
 export const registerUser = async (email: string, password: string, name: string, phone?: string) => {
   try {
-    // React Native Firebase handles persistence automatically
+    
     const userCredential = await auth().createUserWithEmailAndPassword(email, password);
     const user = userCredential.user;
 
@@ -27,7 +27,7 @@ export const registerUser = async (email: string, password: string, name: string
       console.error('Error getting FCM token during registration:', tokenError);
     }
 
-    // Store additional user data in Firestore (excluding password)
+    
     await firestore().collection('users').doc(user.uid).set({
       name,
       email,
@@ -80,13 +80,13 @@ export const loginWithGoogle = async () => {
       throw new Error('Google Sign-In failed: No ID token received');
     }
 
-    // Create a Google credential with the token
+    
     const googleCredential = auth.GoogleAuthProvider.credential(signInResult.idToken);
 
-    // Sign-in the user with the credential
+    
     const userCredential = await auth().signInWithCredential(googleCredential);
-    // Rest of your function remains the same
-    // ...
+ 
+    
   } catch (error) {
     console.error('Google Sign-In Error:', error);
     throw error;
@@ -168,7 +168,7 @@ const migrateTemporaryData = async (userId: string) => {
 // Logout User
 export const logoutUser = async () => {
   try {
-    // Sign out from Google if signed in
+   
     try {
       const isSignedIn = await GoogleSignin.isSignedIn();
       if (isSignedIn) {
@@ -178,7 +178,7 @@ export const logoutUser = async () => {
       console.error('Error signing out from Google:', error);
     }
     
-    // Sign out from Firebase
+   
     await auth().signOut();
     console.log('User logged out successfully');
     return true;
@@ -190,24 +190,24 @@ export const logoutUser = async () => {
 
 // Custom hook to manage authentication state
 export const useAuth = () => {
-  const [user, setUser] = useState<any>(null);  // To store user state
-  const [loading, setLoading] = useState(true);  // To handle loading state
+  const [user, setUser] = useState<any>(null);  
+  const [loading, setLoading] = useState(true);  
 
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribe = auth().onAuthStateChanged((currentUser) => {
       if (currentUser) {
         console.log('User is signed in:', currentUser.uid);
-        setUser(currentUser); // Store user info when logged in
+        setUser(currentUser); 
       } else {
         console.log('User is signed out');
-        setUser(null); // Clear user state when logged out
+        setUser(null); 
       }
 
-      setLoading(false); // Set loading state to false after checking auth state
+      setLoading(false); 
     });
 
-    return () => unsubscribe();  // Clean up the listener when the component is unmounted
+    return () => unsubscribe();  
   }, []);
 
   return { user, loading };

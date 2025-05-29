@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Modal,
-  StyleSheet,
-} from 'react-native';
+import {View,Text, TextInput,TouchableOpacity,Modal, StyleSheet} from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 
 interface Expense {

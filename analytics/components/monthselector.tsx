@@ -12,7 +12,7 @@ const MonthSelector = ({ selectedMonth, onMonthSelect }: { selectedMonth: number
           key={index} 
           style={[styles.chip, index === selectedMonth && styles.activeChip]} 
           onPress={() => {
-            onMonthSelect(index); // Pass selected month to parent
+            onMonthSelect(index); 
           }}
         >
           <Text style={[styles.chipText, index === selectedMonth && styles.activeChipText]}>

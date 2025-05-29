@@ -31,7 +31,7 @@ const ProfileFields = () => {
           const userData = userSnapshot.data();
           setName(userData?.name || '');
           setEmail(userData?.email || '');
-          setContact(userData?.phone || ''); // Assuming 'phone' is the field name in your DB
+          setContact(userData?.phone || ''); 
         } else {
           Alert.alert('Error', 'User data not found');
         }
@@ -68,17 +68,17 @@ const ProfileFields = () => {
         return;
       }
 
-      // Update user document in Firestore
+      
       const userDocRef = firestore().doc(`users/${currentUser.uid}`);
       await userDocRef.update({
         name: name.trim(),
         email: email.trim(),
-        phone: contact.trim() // Assuming 'phone' is the field name in your DB
+        phone: contact.trim() 
       });
 
-      // Optionally update Auth email if it was changed
+     
       if (email !== currentUser.email) {
-        await currentUser.updateEmail(email);  // Update email in Firebase Authentication
+        await currentUser.updateEmail(email);  
         Alert.alert('Note', 'Email updated in Firebase Authentication');
       }
 
@@ -149,7 +149,7 @@ const ProfileFields = () => {
             <TouchableOpacity 
               style={[styles.button, styles.cancelButton]} 
               onPress={() => {
-                fetchUserData(); // Reset to original values
+                fetchUserData(); 
                 setIsEditing(false);
               }}
               disabled={isSaving}

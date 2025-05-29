@@ -108,7 +108,7 @@ export default function Homepage() {
     }
   };
 
-  // Spending limit real-time listener
+  // Spending limit realtime listener
   useEffect(() => {
     const currentUser = auth().currentUser;
     if (!currentUser) return () => { };
@@ -150,7 +150,7 @@ export default function Homepage() {
     return () => unsubscribe();
   }, []);
 
-  // FIXED: Enhanced expenses real-time listener with better error handling and logging
+
   useEffect(() => {
     if (!startDate || !endDate) {
       console.log('No date range set, skipping expenses listener');
@@ -213,7 +213,7 @@ export default function Homepage() {
 
         setTotalSpent(total);
 
-        // Update percentage
+       
         if (maxtotal > 0) {
           const percentage = (total / maxtotal) * 100;
           console.log('Updating spent percentage:', percentage);
@@ -257,7 +257,7 @@ export default function Homepage() {
     setSmsText(sms);
   };
 
-  // FIXED: Better SMS amount handling with validation
+ 
   const handleAmountExtracted = (amount: string | number) => {
     console.log('Amount extracted from SMS:', amount);
     setExtractedAmount(amount);

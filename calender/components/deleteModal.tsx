@@ -3,9 +3,9 @@ import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 
 type Props = {
-  expenseId: string; // ID of the expense to be deleted
+  expenseId: string; 
   onCancel: () => void;
-  onDelete: () => void; // This will trigger the delete action from the parent component
+  onDelete: () => void; 
 };
 
 const DeleteModal: React.FC<Props> = ({ expenseId, onCancel, onDelete }) => {
@@ -13,13 +13,13 @@ const DeleteModal: React.FC<Props> = ({ expenseId, onCancel, onDelete }) => {
   const handleDelete = async () => {
     if (!expenseId) {
       console.error('Expense ID is missing');
-      return; // Exit early if expenseId is undefined or null
+      return; 
     }
 
     try {
       await firestore().collection('expenses').doc(expenseId).delete(); // Delete the document from Firestore
       console.log('Expense deleted successfully');
-      onDelete(); // Notify the parent component that deletion was successful
+      onDelete(); 
     } catch (error) {
       console.error('Error deleting expense: ', error);
     }

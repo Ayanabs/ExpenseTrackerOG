@@ -1,8 +1,8 @@
 import firestore from '@react-native-firebase/firestore';
 import { Category } from './category';
-import auth from '@react-native-firebase/auth'; // Updated import
+import auth from '@react-native-firebase/auth'; 
 
-// Define category metadata with icons and colors
+
 export const categoryMeta: Record<string, { icon: string; color: string }> = {
   Groceries: { icon: 'cart', color: '#4CAF50' },
   Taxi: { icon: 'taxi', color: '#F44336' },
@@ -18,7 +18,7 @@ export const categoryMeta: Record<string, { icon: string; color: string }> = {
 };
 
 // Function to get the current spending period for the logged-in user
-// Updated function to get the current spending period
+
 export const getCurrentSpendingPeriod = async () => {
   try {
     const currentUser = auth().currentUser;
@@ -27,7 +27,7 @@ export const getCurrentSpendingPeriod = async () => {
       return null;
     }
 
-    // Get the current date to find an active spending period
+    
     const now = new Date();
     
     // Query for spending limits that include the current date
@@ -67,7 +67,7 @@ export const getCurrentSpendingPeriod = async () => {
       };
     }
 
-    // We found an active period
+    
     const activeLimit = spendingLimitsQuery.docs[0].data();
     console.log('Found active spending period:', activeLimit);
     
@@ -86,7 +86,7 @@ export const getCurrentSpendingPeriod = async () => {
 // Function to fetch categories with expenses for the current spending period
 export const fetchCategoriesWithExpenses = async (): Promise<Category[]> => {
   try {
-    const currentUser = auth().currentUser; // Fixed auth access
+    const currentUser = auth().currentUser; 
     if (!currentUser) {
       console.error('No user is logged in');
       return [];
@@ -119,7 +119,7 @@ export const fetchCategoriesWithExpenses = async (): Promise<Category[]> => {
         ? expense.amount 
         : parseFloat(expense.amount as unknown as string) || 0;
       
-      // Add to category total
+      
       categoryTotals[category] = (categoryTotals[category] || 0) + amount;
     });
 
@@ -140,7 +140,7 @@ export const fetchCategoriesWithExpenses = async (): Promise<Category[]> => {
     // Create categories array
     const categories: Category[] = Object.keys(categoryTotals).map(name => {
       const spent = categoryTotals[name];
-      const limit = categoryLimits[name] || period.limit || 1000; // Default to overall limit or 1000
+      const limit = categoryLimits[name] || period.limit || 1000; 
       const meta = categoryMeta[name] || categoryMeta.Other;
 
       return {
@@ -162,5 +162,4 @@ export const fetchCategoriesWithExpenses = async (): Promise<Category[]> => {
   }
 };
 
-// Export the function for backwads compatibility with old code
 export const getGroupedExpensesByCategory = fetchCategoriesWithExpenses;
