@@ -61,11 +61,11 @@ const saveToFirestore = async (message: string, extractedAmount: string, sender:
     processingMessages.add(messageHash);
 
     try {
-      // FIXED: Use Firestore transaction for atomic duplicate check + save
+      
       const currentDate = new Date();
       const expenseData = {
         amount,
-        source: `SMS - ${sender}`, // Enhanced source with sender ID
+        source: `SMS - ${sender}`, 
         date: firestore.Timestamp.fromDate(currentDate),
         category: 'SMS',
         userId: currentUser.uid,
@@ -73,8 +73,8 @@ const saveToFirestore = async (message: string, extractedAmount: string, sender:
         messageHash: messageHash,
         createdAt: firestore.Timestamp.fromDate(currentDate),
         rawMessage: message.slice(0, 500),
-        smsSender: sender, // New field for SMS sender
-        senderCategory: categorizeSender(sender), // Categorize sender type
+        smsSender: sender, 
+        senderCategory: categorizeSender(sender), 
         appVersion: '1.0.0',
         platform: Platform.OS,
         processingTimestamp: Date.now(),
@@ -82,7 +82,7 @@ const saveToFirestore = async (message: string, extractedAmount: string, sender:
 
       console.log(' Attempting atomic save with transaction...');
 
-      // First check for duplicates outside of transaction
+      // check for duplicates outside of transaction
       const duplicateCheck = await firestore()
         .collection('expenses')
         .where('messageHash', '==', messageHash)
@@ -160,7 +160,7 @@ const categorizeSender = (sender: string): string => {
   return 'Other';
 };
 
-// Enhanced background task with sender information
+
 const backgroundSmsTask = async (taskData: any) => {
   console.log('🔧 Background SMS task started:', taskData);
 
@@ -175,7 +175,7 @@ const backgroundSmsTask = async (taskData: any) => {
     return;
   }
 
-  // FIXED: Check processing lock in background task too
+  
   if (isProcessingSms) {
     console.log('SMS already being processed, skipping background task');
     return;
@@ -233,9 +233,9 @@ const extractAmountFromSMS = (text: string): string | null => {
   return null;
 };
 
-// Improved hash function with timestamp window and sender
+
 const hashMessage = (messageWithSender: string): string => {
-  // Include 5-minute time window to handle rapid duplicates
+  
   const timeWindow = Math.floor(Date.now() / (5 * 60 * 1000));
   const content = messageWithSender + timeWindow.toString();
   
@@ -335,7 +335,7 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
       if (await BackgroundService.isRunning()) {
         console.log(' Stopping existing background service');
         await BackgroundService.stop();
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for clean shutdown
+        await new Promise(resolve => setTimeout(resolve, 1000)); 
       }
 
       console.log('Starting fresh background service for SMS monitoring');
@@ -369,7 +369,7 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
     setAppState(nextAppState as typeof AppState.currentState);
   };
 
-  // ENHANCED: Single SMS processing function with sender information
+
   const processSmsMessage = async (smsData: SmsData, source: string = 'foreground') => {
     const { body: messageBody, sender } = smsData;
     
@@ -448,7 +448,7 @@ const SmsParser: React.FC<SmsParserProps> = ({ onSmsReceived, onAmountExtracted,
     // Set up app state change handler
     const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
 
-    // ENHANCED: SMS event listener with sender information
+    
     const eventEmitter = Platform.select({
       android: require('react-native').DeviceEventEmitter,
       default: null

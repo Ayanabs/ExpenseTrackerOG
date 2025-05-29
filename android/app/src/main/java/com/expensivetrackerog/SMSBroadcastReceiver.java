@@ -19,7 +19,7 @@ public class SMSBroadcastReceiver extends BroadcastReceiver {
     private static PowerManager.WakeLock processingWakeLock;
 
     public SMSBroadcastReceiver() {
-        // Empty constructor
+        
     }
 
     public void setModule(SMSReceiverModule module) {
@@ -30,7 +30,7 @@ public class SMSBroadcastReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "SMS received in broadcast receiver");
 
-        // Initialize wake lock if needed
+        
         if (processingWakeLock == null) {
             PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
             processingWakeLock = pm.newWakeLock(
@@ -90,13 +90,12 @@ public class SMSBroadcastReceiver extends BroadcastReceiver {
                     if (module != null) {
                         module.sendEvent("sms_received", params);
                         
-                        // To fix duplicate entries, only start the headless task from here
-                        // and remove the JS-side listener
+                        
                         module.startSmsTask(sender, body);
                     } else {
                         Log.e(TAG, "Module reference is null. Cannot send event.");
                         
-                        // Even if module is null, try to launch the service directly
+                        //  launch the service directly
                         Intent headlessIntent = new Intent("BACKGROUND_SMS_TASK");
                         Bundle smsData = new Bundle();
                         smsData.putString("sender", sender);

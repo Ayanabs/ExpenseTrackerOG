@@ -63,8 +63,8 @@ const IncomeOutcomeChart = ({ selectedMonth }: { selectedMonth: number }) => {
         label: 'Monthly Expenses',
         config: {
           colors: [
-            processColor('#22C1C3'), // Previous month
-            processColor(savings >= 0 ? '#4DFF8A' : '#FF4D4D') // Green = savings, Red = overspent
+            processColor('#22C1C3'), 
+            processColor(savings >= 0 ? '#4DFF8A' : '#FF4D4D') 
           ],
           valueTextSize: 12,
           valueTextColor: processColor('#333'),

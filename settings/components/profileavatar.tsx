@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Image, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Alert,
-  Platform 
-} from 'react-native';
+import { View, Image, StyleSheet, TouchableOpacity,  Alert,Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { launchImageLibrary, ImageLibraryOptions, MediaType } from 'react-native-image-picker';
@@ -119,7 +112,7 @@ const ProfileAvatar = ({
           text: 'Remove Custom Image',
           onPress: () => {
             setImageUri(null);
-            saveImage(null); // Remove from AsyncStorage
+            saveImage(null); 
             if (onImageChange) {
               onImageChange(null);
             }
@@ -134,7 +127,7 @@ const ProfileAvatar = ({
     );
   };
 
-  // Don't render until we've loaded the saved image
+  
   if (isLoading) {
     return (
       <View style={styles.wrapper}>

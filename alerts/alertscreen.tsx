@@ -27,10 +27,10 @@ const AlertScreen: React.FC<AlertScreenProps> = ({ navigation }) => {
   const { isRefreshing, refreshData } = useContext(AppContext);
 
   useEffect(() => {
-    // Load alerts from AsyncStorage
+    
     loadAlerts();
     
-    // Check for new alerts
+    
     checkAndNotify();
   }, []);
 

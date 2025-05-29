@@ -3,10 +3,10 @@ import { SafeAreaView, ScrollView, View, Text, StyleSheet } from 'react-native';
 import AnalyticsHeader from '../analytics/components/analyticsheader'; 
 import MonthSelector from '../analytics/components/monthselector'; 
 import IncomeOutcomeChart from '../analytics/components/incomeoutcomechart'; 
-import MonthlyBudgetCard from '../analytics/components/monthlybudgetcard'; // Import MonthlyBudgetCard
+import MonthlyBudgetCard from '../analytics/components/monthlybudgetcard'; 
 import CategoriesContainer from '../homepage/components/categorylist'; 
 import { fetchCategoriesWithExpenses } from '../homepage/components/categoryservice'; 
-import { getFirestore } from '@react-native-firebase/firestore'; // Import firestore to get the total spent
+import { getFirestore } from '@react-native-firebase/firestore';
 import { COLORS } from '../theme';
 
 const styles = StyleSheet.create({
@@ -16,17 +16,17 @@ const styles = StyleSheet.create({
 });
 
 const AnalyticsScreen = () => { 
-  const [categories, setCategories] = useState<any[]>([]); // State to store categories
-  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth()); // Default to current month
-  const [totalSpent, setTotalSpent] = useState<number>(0); // State to hold totalSpent
+  const [categories, setCategories] = useState<any[]>([]); 
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth()); 
+  const [totalSpent, setTotalSpent] = useState<number>(0); 
   
   // Fetch the totalSpent for the selected month (this should only happen once on initial load)
   useEffect(() => {
     const fetchTotalSpent = async () => {
       try {
         const snapshot = await getFirestore().collection('expenses')
-          .where('date', '>=', new Date(new Date().getFullYear(), selectedMonth, 1))  // Start of the selected month
-          .where('date', '<=', new Date(new Date().getFullYear(), selectedMonth + 1, 0)) // End of the selected month
+          .where('date', '>=', new Date(new Date().getFullYear(), selectedMonth, 1))  
+          .where('date', '<=', new Date(new Date().getFullYear(), selectedMonth + 1, 0)) 
           .get();
 
         const expenses = snapshot.docs.map(doc => doc.data());
@@ -38,17 +38,17 @@ const AnalyticsScreen = () => {
     };
 
     fetchTotalSpent();
-  }, [selectedMonth]); // Re-fetch when selectedMonth changes
+  }, [selectedMonth]); 
 
   // Fetch category data from Firestore
   useEffect(() => {
     const loadCategories = async () => {
-      const fetchedCategories = await fetchCategoriesWithExpenses(); // Fetch categories from your function
-      setCategories(fetchedCategories); // Update categories state
+      const fetchedCategories = await fetchCategoriesWithExpenses();
+      setCategories(fetchedCategories);
     };
 
     loadCategories();
-  }, []); // Empty dependency array ensures this runs once when the component is mounted
+  }, []); 
 
   // Handle month selection from the MonthSelector
   const handleMonthSelect = (month: number) => {

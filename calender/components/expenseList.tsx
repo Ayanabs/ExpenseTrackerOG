@@ -3,10 +3,10 @@ import { View, FlatList, Text, StyleSheet, TouchableOpacity } from 'react-native
 import { COLORS } from '../../theme';
 
 type Props = {
-  expenses: any[]; // Expenses will be of type any[]
-  onEdit: (expense: any) => void; // Accepting a general expense object
-  onDelete: (expense: any) => void; // Accepting a general expense object
-  onClose: () => void; // Add the onClose property to the Props type
+  expenses: any[]; 
+  onEdit: (expense: any) => void; 
+  onDelete: (expense: any) => void;
+  onClose: () => void; 
 };
 
 const ExpenseList: React.FC<Props> = ({ expenses, onEdit, onDelete }) => {
@@ -15,7 +15,7 @@ const ExpenseList: React.FC<Props> = ({ expenses, onEdit, onDelete }) => {
       <Text style={styles.title}>Expenses:</Text>
       <FlatList
         data={expenses}
-        keyExtractor={(item: any) => item.id} // Use Firestore document id as the key
+        keyExtractor={(item: any) => item.id} 
         renderItem={({ item }) => (
           <View style={styles.item}>
             <Text>💵 Amount: {item.amount}</Text>

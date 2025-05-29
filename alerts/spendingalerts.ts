@@ -28,7 +28,7 @@ export const calculateTotalExpenses = async (startDate: string, endDate: string)
   }
 };
 
-// Check if spending limit is approaching or exceeded
+// Check spending limit and return status
 export const checkSpendingLimit = async () => {
   try {
     const currentUser = auth().currentUser;

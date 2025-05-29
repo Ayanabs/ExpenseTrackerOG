@@ -104,7 +104,7 @@ export const setupNotificationListeners = (
 
 export const sendLocalNotification = async (title: string, body: string, data: any = {}) => {
   try {
-    // For Android, we can use the notification composer
+    
     await messaging().sendMessage({
       data: {
         type: 'SPENDING_ALERT',

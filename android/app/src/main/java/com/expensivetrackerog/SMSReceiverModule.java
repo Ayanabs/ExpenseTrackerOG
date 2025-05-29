@@ -58,7 +58,7 @@ public class SMSReceiverModule extends ReactContextBaseJavaModule {
                 try {
                     reactContext.unregisterReceiver(smsReceiver);
                 } catch (Exception e) {
-                    // Silently handle if the receiver wasn't registered
+                    
                 }
                 receiverRegistered = false;
             }
@@ -101,9 +101,9 @@ public class SMSReceiverModule extends ReactContextBaseJavaModule {
     }
 
     public void startSmsTask(String sender, String body) {
-        // Acquire wake lock to ensure the task completes
+        
         if (!wakeLock.isHeld()) {
-            wakeLock.acquire(60000); // Acquire for 60 seconds max
+            wakeLock.acquire(60000); 
         }
         
         Intent intent = new Intent("BACKGROUND_SMS_TASK");

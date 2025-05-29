@@ -1,16 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  Modal, 
-  View, 
-  Text, 
-  TextInput, 
-  Button, 
-  StyleSheet, 
-  ActivityIndicator, 
-  TouchableOpacity,
-  Image,
-  Alert
-} from 'react-native';
+import {  Modal,  View, Text,  TextInput,  Button,  StyleSheet, ActivityIndicator,  TouchableOpacity, Image, Alert} from 'react-native';
 import { auth } from '../../database/firebaseinit';
 
 interface LoginModalProps {

@@ -29,7 +29,7 @@ const BottomTabs: React.FC<BottomTabsProps> = ({ onAddPress, onTakePhoto }) => {
     if (onTakePhoto) {
       onTakePhoto();
     } else {
-      // Fallback to gallery if no take photo handler provided
+     
       onAddPress();
     }
     setShowOptions(false);

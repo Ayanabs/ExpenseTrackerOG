@@ -4,7 +4,7 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
 interface MonthlyBudgetCardProps {
-  selectedMonth: number; // 0-11 for Jan-Dec (matches MonthSelector's index)
+  selectedMonth: number; 
 }
 
 const MonthlyBudgetCard: React.FC<MonthlyBudgetCardProps> = ({ selectedMonth }) => {
@@ -46,7 +46,7 @@ const MonthlyBudgetCard: React.FC<MonthlyBudgetCardProps> = ({ selectedMonth }) 
         }
         
         // Fetch spending limit
-        let limitValue = 30000; // Default if not found
+        let limitValue = 30000; 
         
         try {
           const limitSnapshot = await firestore()
@@ -55,7 +55,7 @@ const MonthlyBudgetCard: React.FC<MonthlyBudgetCardProps> = ({ selectedMonth }) 
             .get();
           
           if (!limitSnapshot.empty) {
-            // Get the first document as the spending limit
+           
             const limitDoc = limitSnapshot.docs[0].data();
             if (limitDoc && limitDoc.limit) {
               limitValue = parseFloat(limitDoc.limit);
@@ -68,9 +68,9 @@ const MonthlyBudgetCard: React.FC<MonthlyBudgetCardProps> = ({ selectedMonth }) 
         setCurrentLimit(limitValue);
         
         // Calculate start and end dates for the selected month
-        // Note: selectedMonth is 0-11, but Date constructor expects 0-11 for months, so no adjustment needed
+        
         const startDate = new Date(currentYear, selectedMonth, 1);
-        const endDate = new Date(currentYear, selectedMonth + 1, 0); // Last day of month
+        const endDate = new Date(currentYear, selectedMonth + 1, 0);
         
         console.log(`Fetching expenses from ${startDate.toISOString()} to ${endDate.toISOString()}`);
         
@@ -111,12 +111,12 @@ const MonthlyBudgetCard: React.FC<MonthlyBudgetCardProps> = ({ selectedMonth }) 
     setRemainingBudget(currentLimit - totalSpent);
   }, [currentLimit, totalSpent]);
   
-  // Don't show anything if not logged in
+  
   if (!isLoggedIn) {
     return null;
   }
   
-  // Show loading indicator
+  
   if (loading) {
     return (
       <View style={styles.card}>
@@ -136,9 +136,9 @@ const MonthlyBudgetCard: React.FC<MonthlyBudgetCardProps> = ({ selectedMonth }) 
   
   // Determine the color of the progress bar
   const getProgressColor = () => {
-    if (progressPercentage > 90) return '#FF5252'; // Red if over 90%
-    if (progressPercentage > 75) return '#FFC107'; // Yellow if over 75%
-    return '#5CB85C'; // Green otherwise
+    if (progressPercentage > 90) return '#FF5252'; 
+    if (progressPercentage > 75) return '#FFC107';
+    return '#5CB85C'; 
   };
 
   // Get month name for display
